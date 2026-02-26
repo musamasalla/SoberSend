@@ -2,7 +2,13 @@ import ManagedSettings
 import UIKit
 import UserNotifications
 
+extension ManagedSettingsStore.Name {
+    static let soberSend = ManagedSettingsStore.Name("com.musamasalla.SoberSend.lockdown")
+}
+
 class ShieldActionExtension: ShieldActionDelegate {
+    
+    private let store = ManagedSettingsStore(named: .soberSend)
 
     private func handleUnlockRequest() -> ShieldActionResponse {
         let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")

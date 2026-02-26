@@ -2,14 +2,22 @@ import Foundation
 import FamilyControls
 import ManagedSettings
 import SwiftUI
+import DeviceActivity
+
+extension ManagedSettingsStore.Name {
+    static let soberSend = ManagedSettingsStore.Name("com.musamasalla.SoberSend.lockdown")
+}
 
 @MainActor
 @Observable
 class LockdownManager {
     var isAuthorized: Bool = false
     
-    // Day-of-week bitmask keys in shared defaults
-    @ObservationIgnored private let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") ?? UserDefaults.standard
+    // Shared constants
+    private let appGroup = "group.com.musamasalla.SoberSend"
+    private let activityName = DeviceActivityName("com.musamasalla.SoberSend.lockdownActivity")
+    
+    @ObservationIgnored private lazy var sharedDefaults = UserDefaults(suiteName: appGroup) ?? UserDefaults.standard
     @ObservationIgnored private let selectionKey = "savedFamilyActivitySelection"
     
     var selectionToDiscourage = FamilyActivitySelection() {
@@ -32,13 +40,11 @@ class LockdownManager {
         set { sharedDefaults.set(newValue, forKey: "activeDaysMask") }
     }
 
-    private let store = ManagedSettingsStore()
-    private var timer: Timer?
+    private let store = ManagedSettingsStore(named: .soberSend)
 
     init() {
         loadSelection()
         checkAuthorization()
-        startScheduleMonitoring()
     }
 
     private func saveSelection() {
@@ -58,7 +64,6 @@ class LockdownManager {
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             isAuthorized = true
-            startScheduleMonitoring()
         } catch {
             print("Failed to authorize FamilyControls: \(error)")
         }
@@ -75,6 +80,9 @@ class LockdownManager {
             store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
             store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
             store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
+            
+            // Register with OS for background enforcement
+            startDeviceActivityMonitoring()
         } else {
             clearRestrictions()
         }
@@ -82,15 +90,36 @@ class LockdownManager {
 
     func clearRestrictions() {
         store.clearAllSettings()
+        DeviceActivityCenter().stopMonitoring([activityName])
     }
 
-    // MARK: - Schedule Monitoring
-    private func startScheduleMonitoring() {
+    // MARK: - Device Activity Monitoring (Background Enforcement)
+    private func startDeviceActivityMonitoring() {
         guard isAuthorized else { return }
-        setShieldRestrictions()
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async { self?.setShieldRestrictions() }
+        
+        let startHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
+        let startMinute = sharedDefaults.integer(forKey: "lockStartMinute")
+        let endHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
+        let endMinute = sharedDefaults.integer(forKey: "lockEndMinute")
+        
+        // Create components for the schedule
+        let startComponents = DateComponents(hour: startHour, minute: startMinute)
+        let endComponents = DateComponents(hour: endHour, minute: endMinute)
+        
+        // DeviceActivitySchedule handles the "Every Day" logic if we want, 
+        // but since we have a custom bitmask, we monitor the window and let 
+        // isAppBlockingActive check the weekday on each transition or manual trigger.
+        let schedule = DeviceActivitySchedule(
+            intervalStart: startComponents,
+            intervalEnd: endComponents,
+            repeats: true
+        )
+        
+        do {
+            try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
+            print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
+        } catch {
+            print("Failed to start monitoring: \(error)")
         }
     }
 

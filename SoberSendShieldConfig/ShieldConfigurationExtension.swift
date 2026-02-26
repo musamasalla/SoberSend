@@ -2,7 +2,13 @@ import ManagedSettings
 import ManagedSettingsUI
 import UIKit
 
+extension ManagedSettingsStore.Name {
+    static let soberSend = ManagedSettingsStore.Name("com.musamasalla.SoberSend.lockdown")
+}
+
 class ShieldConfigurationExtension: ShieldConfigurationDataSource {
+    
+    private let store = ManagedSettingsStore(named: .soberSend)
     private func getSoberSendConfig() -> ShieldConfiguration {
         return ShieldConfiguration(
             backgroundBlurStyle: .systemMaterialDark,
