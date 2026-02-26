@@ -10,5 +10,9 @@
 	<string>SoberSend requires Speech Recognition to analyze the tongue twister challenge and verify you are sober.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>SoberSend needs the microphone to listen to you reading the tongue twister challenge.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>SoberSend needs access to your contacts so you can select which contacts to lock during your lockdown window.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>SoberSend uses Face ID for the Emergency Unlock feature to verify your identity.</string>
 </dict>
 </plist>

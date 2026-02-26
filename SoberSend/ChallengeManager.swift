@@ -42,7 +42,7 @@ class ChallengeManager {
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         
         request = SFSpeechAudioBufferRecognitionRequest()
-        guard let request = request else { fatalError("Unable to create request") }
+        guard let request = request else { throw ChallengeError.speechRequestFailed }
         request.shouldReportPartialResults = true
         
         let inputNode = audioEngine.inputNode
@@ -96,5 +96,16 @@ class ChallengeManager {
         }
         
         return matches / Double(tWords.count)
+    }
+}
+
+enum ChallengeError: Error, LocalizedError {
+    case speechRequestFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .speechRequestFailed:
+            return "Unable to create speech recognition request."
+        }
     }
 }

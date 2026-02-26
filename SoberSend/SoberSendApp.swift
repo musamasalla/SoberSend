@@ -1,15 +1,16 @@
-//
-//  SoberSendApp.swift
-//  SoberSend
-//
-//  Created by Musa Masalla on 2026/02/26.
-//
-
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct SoberSendApp: App {
+    
+    @State private var emergencyManager = EmergencyUnlockManager()
+    @State private var notificationManager = NotificationManager()
+    
+    // Observe when app returns to foreground to check for pending unlock requests
+    @Environment(\.scenePhase) private var scenePhase
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             LockedContact.self,
@@ -20,17 +21,38 @@ struct SoberSendApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Graceful fallback: log the error and use an in-memory store
+            // This avoids a crash on schema migration during app updates
+            print("⚠️ SoberSend: Could not create persistent ModelContainer: \(error). Falling back to in-memory store.")
+            let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            return try! ModelContainer(for: schema, configurations: [fallbackConfig])
         }
     }()
-    
-    @State private var emergencyManager = EmergencyUnlockManager()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(emergencyManager)
+                .environment(notificationManager)
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        checkForPendingUnlockRequest()
+                    }
+                }
         }
         .modelContainer(sharedModelContainer)
         .environment(emergencyManager)
+    }
+    
+    // MARK: - App Lifecycle
+    private func checkForPendingUnlockRequest() {
+        // When app becomes active, check if the ShieldAction set the unlock flag
+        // If so, send the unlock notification (which ContentView observes via AppStorage)
+        guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
+        if shared.bool(forKey: "isRequestingAppUnlock") {
+            // Flag is already set — ContentView will pick it up and show the challenge
+            // Register notification categories so the notification actions work
+            notificationManager.registerNotificationCategories()
+        }
     }
 }

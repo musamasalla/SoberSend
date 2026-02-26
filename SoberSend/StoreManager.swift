@@ -70,6 +70,11 @@ class StoreManager {
         isPremium = hasActiveSubscription
     }
 
+    func restorePurchases() async {
+        try? await AppStore.sync()
+        await updatePremiumStatus()
+    }
+
 
 
     nonisolated private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {

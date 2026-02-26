@@ -12,6 +12,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("hasCompletedOnboarding", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var hasCompletedOnboarding: Bool = false
     @AppStorage("isRequestingAppUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingAppUnlock: Bool = false
+    @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var globalSoberNote: String = ""
     
     // Inject Managers
     @State private var lockdownManager = LockdownManager()
@@ -37,7 +38,7 @@ struct ContentView: View {
             ChallengeCoordinatorView(
                 contactOrAppName: "Restricted App", 
                 difficulty: .expert, 
-                soberNote: "Are you sure you want to open this app?"
+                soberNote: globalSoberNote.isEmpty ? nil : globalSoberNote
             ) { passed in
                 if passed {
                     // Temporarily lift restrictions (for demonstration purposes this clears all shields; 

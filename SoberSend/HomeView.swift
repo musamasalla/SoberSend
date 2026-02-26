@@ -30,7 +30,7 @@ struct HomeView: View {
                 MorningReportView()
             }
             .tabItem {
-                Label("Stats", systemImage: "chart.bar")
+                Label("Report", systemImage: "sunrise")
             }
             .tag(1)
             
@@ -38,11 +38,22 @@ struct HomeView: View {
                 StatsView()
             }
             .tabItem {
-                Label("Settings", systemImage: "gear")
+                Label("Stats", systemImage: "chart.bar")
             }
             .tag(2)
+            
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
+            .tag(3)
         }
         .familyActivityPicker(isPresented: $isPresented, selection: Bindable(lockdownManager).selectionToDiscourage)
+        .sheet(isPresented: $showIntentions) {
+            IntentionsView()
+        }
         .preferredColorScheme(.dark)
     }
 }
