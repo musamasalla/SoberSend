@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EmergencyUnlockView: View {
     @Environment(EmergencyUnlockManager.self) private var emergencyManager
+    @Environment(LockdownManager.self) private var lockdownManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var errorMessage: String?
@@ -78,6 +79,7 @@ struct EmergencyUnlockView: View {
         emergencyManager.attemptEmergencyUnlock { success, error in
             isAuthenticating = false
             if success {
+                lockdownManager.activateBypass(duration: 300)
                 dismiss()
             } else {
                 errorMessage = error

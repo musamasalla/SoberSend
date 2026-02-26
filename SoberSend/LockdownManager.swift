@@ -27,24 +27,73 @@ class LockdownManager {
         }
     }
 
-    var isManuallyActivated: Bool {
-        get { sharedDefaults.bool(forKey: "isManuallyActive") }
-        set {
-            sharedDefaults.set(newValue, forKey: "isManuallyActive")
+    var isManuallyActivated: Bool = false {
+        didSet {
+            sharedDefaults.set(isManuallyActivated, forKey: "isManuallyActive")
             setShieldRestrictions()
         }
     }
 
-    var activeDaysMask: Int {
-        get { sharedDefaults.object(forKey: "activeDaysMask") == nil ? 127 : sharedDefaults.integer(forKey: "activeDaysMask") }
-        set { sharedDefaults.set(newValue, forKey: "activeDaysMask") }
+    var activeDaysMask: Int = 127 {
+        didSet {
+            sharedDefaults.set(activeDaysMask, forKey: "activeDaysMask")
+            setShieldRestrictions()
+        }
+    }
+    
+    var lockStartHour: Int = 22 {
+        didSet {
+            sharedDefaults.set(lockStartHour, forKey: "lockStartHour")
+            setShieldRestrictions()
+        }
+    }
+    
+    var lockStartMinute: Int = 0 {
+        didSet {
+            sharedDefaults.set(lockStartMinute, forKey: "lockStartMinute")
+            setShieldRestrictions()
+        }
+    }
+    
+    var lockEndHour: Int = 7 {
+        didSet {
+            sharedDefaults.set(lockEndHour, forKey: "lockEndHour")
+            setShieldRestrictions()
+        }
+    }
+    
+    var lockEndMinute: Int = 0 {
+        didSet {
+            sharedDefaults.set(lockEndMinute, forKey: "lockEndMinute")
+            setShieldRestrictions()
+        }
     }
 
     private let store = ManagedSettingsStore(named: .soberSend)
 
     init() {
+        self.isManuallyActivated = sharedDefaults.bool(forKey: "isManuallyActive")
+        self.activeDaysMask = sharedDefaults.object(forKey: "activeDaysMask") == nil ? 127 : sharedDefaults.integer(forKey: "activeDaysMask")
+        
+        self.lockStartHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
+        self.lockStartMinute = sharedDefaults.integer(forKey: "lockStartMinute")
+        self.lockEndHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
+        self.lockEndMinute = sharedDefaults.integer(forKey: "lockEndMinute")
+        
         loadSelection()
         checkAuthorization()
+        
+        // Load bypass if still valid
+        let bypassTimestamp = sharedDefaults.double(forKey: bypassKey)
+        if bypassTimestamp > 0 {
+            let endTime = Date(timeIntervalSince1970: bypassTimestamp)
+            if endTime > Date() {
+                self.bypassEndTime = endTime
+                scheduleBypassExpiration(at: endTime)
+            } else {
+                sharedDefaults.removeObject(forKey: bypassKey)
+            }
+        }
     }
 
     private func saveSelection() {
@@ -97,10 +146,10 @@ class LockdownManager {
     private func startDeviceActivityMonitoring() {
         guard isAuthorized else { return }
         
-        let startHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
-        let startMinute = sharedDefaults.integer(forKey: "lockStartMinute")
-        let endHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
-        let endMinute = sharedDefaults.integer(forKey: "lockEndMinute")
+        let startHour = lockStartHour
+        let startMinute = lockStartMinute
+        let endHour = lockEndHour
+        let endMinute = lockEndMinute
         
         // Create components for the schedule
         let startComponents = DateComponents(hour: startHour, minute: startMinute)
@@ -139,16 +188,65 @@ class LockdownManager {
         setShieldRestrictions()
     }
 
+    // MARK: - Bypass Management
+    private let bypassKey = "bypassEndTime"
+    
+    var bypassEndTime: Date? {
+        didSet {
+            if let date = bypassEndTime {
+                sharedDefaults.set(date.timeIntervalSince1970, forKey: bypassKey)
+            } else {
+                sharedDefaults.removeObject(forKey: bypassKey)
+            }
+            setShieldRestrictions()
+        }
+    }
+    
+    var isBypassActive: Bool {
+        guard let endTime = bypassEndTime else { return false }
+        return Date() < endTime
+    }
+    
+    @ObservationIgnored private var bypassTask: Task<Void, Never>?
+
+    /// Temporarily lifts all restrictions for a specified duration.
+    func activateBypass(duration: TimeInterval) {
+        bypassTask?.cancel()
+        
+        let endTime = Date().addingTimeInterval(duration)
+        bypassEndTime = endTime
+        clearRestrictions()
+        
+        scheduleBypassExpiration(at: endTime)
+    }
+    
+    private func scheduleBypassExpiration(at date: Date) {
+        bypassTask?.cancel()
+        let duration = date.timeIntervalSince(Date())
+        guard duration > 0 else {
+            self.bypassEndTime = nil
+            return
+        }
+        
+        bypassTask = Task {
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
+            self.bypassEndTime = nil
+        }
+    }
+
     // MARK: - Window Check
     public func isAppBlockingActive() -> Bool {
+        // If bypass is active, never block
+        if isBypassActive { return false }
         return isCurrentlyInLockedWindow() || isManuallyActivated
     }
 
     public func isCurrentlyInLockedWindow() -> Bool {
-        let startHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
-        let startMinute = sharedDefaults.integer(forKey: "lockStartMinute")
-        let endHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
-        let endMinute = sharedDefaults.integer(forKey: "lockEndMinute")
+        let startHour = lockStartHour
+        let startMinute = lockStartMinute
+        let endHour = lockEndHour
+        let endMinute = lockEndMinute
 
         let now = Date()
         let calendar = Calendar.current

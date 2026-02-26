@@ -6,11 +6,27 @@ import SwiftUI
 class EmergencyUnlockManager {
     var isEmergencyUnlocked: Bool = false
     var emergencyUnlockEndTime: Date? = nil
-    var emergencyCooldownEndTime: Date? = nil
+    var emergencyCooldownEndTime: Date? = nil {
+        didSet {
+            if let date = emergencyCooldownEndTime {
+                UserDefaults(suiteName: "group.com.musamasalla.SoberSend")?.set(date.timeIntervalSince1970, forKey: "emergencyCooldownEndTime")
+            }
+        }
+    }
     
     // 5 minute unlock, 24 hour cooldown after use
     private let unlockDuration: TimeInterval = 5 * 60
     private let cooldownDuration: TimeInterval = 24 * 60 * 60
+    
+    init() {
+        let timestamp = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")?.double(forKey: "emergencyCooldownEndTime") ?? 0
+        if timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            if date > Date() {
+                self.emergencyCooldownEndTime = date
+            }
+        }
+    }
     
     func attemptEmergencyUnlock(completion: @escaping (Bool, String?) -> Void) {
         if let cooldownEnd = emergencyCooldownEndTime, Date() < cooldownEnd {

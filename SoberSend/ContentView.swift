@@ -12,13 +12,14 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("hasCompletedOnboarding", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var hasCompletedOnboarding: Bool = false
     @AppStorage("isRequestingAppUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingAppUnlock: Bool = false
+    @AppStorage("isRequestingEmergencyUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingEmergencyUnlock: Bool = false
     @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var globalSoberNote: String = ""
     
-    // Inject Managers
-    @State private var lockdownManager = LockdownManager()
-    @State private var challengeManager = ChallengeManager()
-    @State private var storeManager = StoreManager()
-    @State private var notificationManager = NotificationManager()
+    // Inject Managers for children
+    @Environment(LockdownManager.self) private var lockdownManager
+    @Environment(ChallengeManager.self) private var challengeManager
+    @Environment(StoreManager.self) private var storeManager
+    @Environment(NotificationManager.self) private var notificationManager
     @Environment(EmergencyUnlockManager.self) private var emergencyManager
 
     var body: some View {
@@ -41,18 +42,31 @@ struct ContentView: View {
                 soberNote: globalSoberNote.isEmpty ? nil : globalSoberNote
             ) { passed in
                 if passed {
-                    // Temporarily lift restrictions (for demonstration purposes this clears all shields; 
-                    // a robust implementation might use ShieldConfiguration to allow specific apps)
-                    lockdownManager.clearRestrictions()
-                    
-                    // Re-apply them after 5 minutes
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 300) {
-                        lockdownManager.setShieldRestrictions()
-                    }
+                    // Temporarily lift restrictions via the manager
+                    lockdownManager.activateBypass(duration: 300)
                 }
                 
                 // Clear the flag to dismiss the sheet
                 isRequestingAppUnlock = false
+            }
+            .environment(lockdownManager)
+            .environment(challengeManager)
+            .environment(storeManager)
+            .environment(notificationManager)
+            .environment(emergencyManager)
+        }
+        .sheet(isPresented: $isRequestingEmergencyUnlock) {
+            EmergencyUnlockView()
+                .environment(lockdownManager)
+                .environment(challengeManager)
+                .environment(storeManager)
+                .environment(notificationManager)
+                .environment(emergencyManager)
+        }
+        .onAppear {
+            // Check flags immediately in case app was killed
+            if isRequestingAppUnlock || isRequestingEmergencyUnlock {
+                notificationManager.registerNotificationCategories()
             }
         }
     }

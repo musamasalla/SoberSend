@@ -1,14 +1,11 @@
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
+    // Environment Managers
     @Environment(StoreManager.self) private var storeManager
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(LockdownManager.self) private var lockdownManager
-    
-    @AppStorage("lockStartHour", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockStartHour: Int = 22
-    @AppStorage("lockStartMinute", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockStartMinute: Int = 0
-    @AppStorage("lockEndHour", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockEndHour: Int = 7
-    @AppStorage("lockEndMinute", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockEndMinute: Int = 0
     
     @State private var startTime: Date = Date()
     @State private var endTime: Date = Date()
@@ -52,7 +49,7 @@ struct SettingsView: View {
                         ForEach(0..<7, id: \.self) { i in
                             let weekday = i + 1
                             let isActive = lockdownManager.isDayActive(weekday)
-                            let isWeekend = weekday == 6 || weekday == 7
+                            let isWeekend = weekday == 1 || weekday == 7  // Sunday=1, Saturday=7
                             Button(action: { lockdownManager.toggleDay(weekday) }) {
                                 Text(dayLabels[i])
                                     .font(.system(size: 13, weight: .bold))
@@ -77,24 +74,44 @@ struct SettingsView: View {
                 DatePicker("Starts", selection: $startTime, displayedComponents: .hourAndMinute)
                     .onChange(of: startTime) { _, v in
                         let c = Calendar.current.dateComponents([.hour, .minute], from: v)
-                        lockStartHour = c.hour ?? 22; lockStartMinute = c.minute ?? 0
+                        lockdownManager.lockStartHour = c.hour ?? 22
+                        lockdownManager.lockStartMinute = c.minute ?? 0
                     }
                 DatePicker("Ends", selection: $endTime, displayedComponents: .hourAndMinute)
                     .onChange(of: endTime) { _, v in
                         let c = Calendar.current.dateComponents([.hour, .minute], from: v)
-                        lockEndHour = c.hour ?? 7; lockEndMinute = c.minute ?? 0
+                        lockdownManager.lockEndHour = c.hour ?? 7
+                        lockdownManager.lockEndMinute = c.minute ?? 0
                     }
             }
             
             // Notifications
             Section("Notifications") {
-                Toggle("Morning Report", isOn: Bindable(notificationManager).isAuthorized)
-                    .disabled(true)
-                Button("Test Notification") {
-                    notificationManager.scheduleMorningReport(
-                        at: Calendar.current.component(.hour, from: Date()),
-                        minute: Calendar.current.component(.minute, from: Date()) + 1
-                    )
+                HStack {
+                    Text("Morning Report")
+                    Spacer()
+                    if notificationManager.isAuthorized {
+                        Text("Enabled")
+                            .foregroundColor(.green)
+                            .font(.subheadline)
+                    } else {
+                        Button("Enable in Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                    }
+                }
+                Button("Send Test Notification") {
+                    let content = UNMutableNotificationContent()
+                    content.title = "Last night's report 🛡️"
+                    content.body = "Tap to see who you tried to text last night."
+                    content.sound = .default
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+                    let request = UNNotificationRequest(identifier: "test_notification", content: content, trigger: trigger)
+                    UNUserNotificationCenter.current().add(request)
                 }
             }
             
@@ -108,8 +125,8 @@ struct SettingsView: View {
         .navigationTitle("Settings ⚙️")
         .preferredColorScheme(.dark)
         .onAppear {
-            startTime = Calendar.current.date(bySettingHour: lockStartHour, minute: lockStartMinute, second: 0, of: Date()) ?? Date()
-            endTime = Calendar.current.date(bySettingHour: lockEndHour, minute: lockEndMinute, second: 0, of: Date()) ?? Date()
+            startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
+            endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
         }
         .alert("Restore Purchases", isPresented: $showRestoreAlert) {
             Button("OK", role: .cancel) {}

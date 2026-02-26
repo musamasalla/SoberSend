@@ -6,7 +6,10 @@ import StoreKit
 class StoreManager {
     var isPremium: Bool = false
     var products: [Product] = []
-    
+    // Exposed so the paywall can show a spinner vs an error + retry
+    var isLoadingProducts: Bool = false
+    var productsLoadError: String? = nil
+
     private let productIDs = ["com.sobersend.premium.monthly", "com.sobersend.premium.yearly"]
     private var updatesTask: Task<Void, Never>? = nil
 
@@ -29,12 +32,22 @@ class StoreManager {
     }
 
     func requestProducts() async {
+        isLoadingProducts = true
+        productsLoadError = nil
+        print("🛒 StoreManager: requesting products for IDs: \(productIDs)")
         do {
-            products = try await Product.products(for: productIDs)
-            products.sort { $0.price < $1.price }
+            let fetched = try await Product.products(for: productIDs)
+            products = fetched.sorted { $0.price < $1.price }
+            print("🛒 StoreManager: loaded \(products.count) products: \(products.map { "\($0.displayName) (\($0.id)) — \($0.displayPrice)" })")
+            if products.isEmpty {
+                productsLoadError = "No products found. Make sure your StoreKit configuration is selected in the scheme."
+                print("⚠️ StoreManager: Product.products returned empty — check scheme StoreKit config")
+            }
         } catch {
-            print("Failed product request from the App Store server: \(error)")
+            productsLoadError = error.localizedDescription
+            print("❌ StoreManager: Product request failed: \(error)")
         }
+        isLoadingProducts = false
     }
 
     func purchase(_ product: Product) async throws {
@@ -55,7 +68,6 @@ class StoreManager {
     private func updatePremiumStatus() async {
         var hasActiveSubscription = false
 
-        // Iterate through all of the user's purchased products.
         for await result in Transaction.currentEntitlements {
             do {
                 let transaction = try checkVerified(result)
@@ -74,8 +86,6 @@ class StoreManager {
         try? await AppStore.sync()
         await updatePremiumStatus()
     }
-
-
 
     nonisolated private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {

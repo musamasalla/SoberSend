@@ -64,6 +64,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         content.title = "🔒 App Locked"
         content.body = "Want in? Prove you're sober first. Tap to take the challenge."
         content.sound = .defaultCritical
+        content.interruptionLevel = .timeSensitive
         content.userInfo = ["action": "app_unlock_challenge"]
         // Deep link URL scheme: sobersend://challenge
         content.categoryIdentifier = "APP_UNLOCK"

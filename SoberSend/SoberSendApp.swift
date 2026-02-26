@@ -7,6 +7,14 @@ struct SoberSendApp: App {
     
     @State private var emergencyManager = EmergencyUnlockManager()
     @State private var notificationManager = NotificationManager()
+    @State private var lockdownManager = LockdownManager()
+    @State private var storeManager = StoreManager()
+    @State private var challengeManager = ChallengeManager()
+    
+    init() {
+        // Register categories immediately on launch
+        NotificationManager().registerNotificationCategories()
+    }
     
     // Observe when app returns to foreground to check for pending unlock requests
     @Environment(\.scenePhase) private var scenePhase
@@ -34,6 +42,9 @@ struct SoberSendApp: App {
             ContentView()
                 .environment(emergencyManager)
                 .environment(notificationManager)
+                .environment(lockdownManager)
+                .environment(storeManager)
+                .environment(challengeManager)
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         checkForPendingUnlockRequest()

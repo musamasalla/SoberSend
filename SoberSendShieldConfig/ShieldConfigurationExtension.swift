@@ -15,10 +15,10 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
             backgroundColor: UIColor(red: 20/255, green: 20/255, blue: 20/255, alpha: 1.0),
             icon: UIImage(systemName: "lock.shield.fill"), // Using a system image as a fallback
             title: ShieldConfiguration.Label(text: "App Locked", color: .white),
-            subtitle: ShieldConfiguration.Label(text: "SoberSend lockdown is active. Pass a cognitive challenge to unlock this app for 5 minutes.", color: .lightGray),
+            subtitle: ShieldConfiguration.Label(text: "SoberSend is active. Prove you're sober to unlock, or use Emergency if you're in trouble.\n\n(Swipe up to cancel and return home)", color: .lightGray),
             primaryButtonLabel: ShieldConfiguration.Label(text: "Take Challenge", color: .white),
             primaryButtonBackgroundColor: UIColor.systemBlue,
-            secondaryButtonLabel: ShieldConfiguration.Label(text: "Close", color: .gray)
+            secondaryButtonLabel: ShieldConfiguration.Label(text: "Emergency", color: .systemRed)
         )
     }
 

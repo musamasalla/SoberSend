@@ -25,7 +25,7 @@ struct OnboardingView: View {
                 SetIntentionsView(currentStep: $currentStep)
                     .tag(4)
                 
-                PaywallView()
+                OnboardingPaywallStep()
                     .tag(5)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
@@ -150,11 +150,6 @@ struct SetScheduleView: View {
     @Binding var currentStep: Int
     @Environment(LockdownManager.self) private var lockdownManager
     
-    @AppStorage("lockStartHour", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockStartHour: Int = 22
-    @AppStorage("lockStartMinute", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockStartMinute: Int = 0
-    @AppStorage("lockEndHour", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockEndHour: Int = 7
-    @AppStorage("lockEndMinute", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockEndMinute: Int = 0
-    
     @State private var startTime: Date = Date()
     @State private var endTime: Date = Date()
     
@@ -220,7 +215,8 @@ struct SetScheduleView: View {
                     DatePicker("Lockdown starts", selection: $startTime, displayedComponents: .hourAndMinute)
                         .onChange(of: startTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
-                            lockStartHour = c.hour ?? 22; lockStartMinute = c.minute ?? 0
+                            lockdownManager.lockStartHour = c.hour ?? 22
+                            lockdownManager.lockStartMinute = c.minute ?? 0
                         }
                 }
                 Divider()
@@ -229,7 +225,8 @@ struct SetScheduleView: View {
                     DatePicker("Lockdown ends", selection: $endTime, displayedComponents: .hourAndMinute)
                         .onChange(of: endTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
-                            lockEndHour = c.hour ?? 7; lockEndMinute = c.minute ?? 0
+                            lockdownManager.lockEndHour = c.hour ?? 7
+                            lockdownManager.lockEndMinute = c.minute ?? 0
                         }
                 }
             }
@@ -244,8 +241,8 @@ struct SetScheduleView: View {
             }
         }
         .onAppear {
-            startTime = Calendar.current.date(bySettingHour: lockStartHour, minute: lockStartMinute, second: 0, of: Date()) ?? Date()
-            endTime = Calendar.current.date(bySettingHour: lockEndHour, minute: lockEndMinute, second: 0, of: Date()) ?? Date()
+            startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
+            endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
         }
     }
     
@@ -415,90 +412,29 @@ struct SetIntentionsView: View {
     }
 }
 
-// MARK: - Paywall View
-struct PaywallView: View {
+// MARK: - Onboarding Paywall Step (wraps the full-screen PaywallView)
+struct OnboardingPaywallStep: View {
     @Environment(StoreManager.self) private var storeManager
     @Environment(NotificationManager.self) private var notificationManager
     @AppStorage("hasCompletedOnboarding", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var hasCompletedOnboarding: Bool = false
-    
-    var body: some View {
-        VStack(spacing: 24) {
-            Text("Unlock Expert Mode 🏆")
-                .font(.system(size: 30, weight: .bold))
-                .padding(.top, 40)
-            
-            VStack(alignment: .leading, spacing: 12) {
-                featureRow(icon: "person.crop.circle", text: "Lock unlimited contacts & apps", free: false)
-                featureRow(icon: "brain.head.profile", text: "All challenge difficulty levels", free: false)
-                featureRow(icon: "chart.bar.fill", text: "Full statistics & streak history", free: false)
-                featureRow(icon: "square.and.arrow.up", text: "Shareable morning report cards", free: false)
-                
-                Divider().background(Color.gray)
-                
-                featureRow(icon: "checkmark.circle", text: "1 contact or 1 app (free)", free: true)
-                featureRow(icon: "checkmark.circle", text: "Medium difficulty (free)", free: true)
-            }
-            .padding()
-            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
-            .padding(.horizontal, 30)
-            
-            Spacer()
-            
-            if storeManager.isPremium {
-                Text("🎉 Premium Unlocked!")
-                    .font(.headline)
-                    .foregroundColor(.green)
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(storeManager.products) { product in
-                        Button(action: {
-                            Task { try? await storeManager.purchase(product) }
-                        }) {
-                            VStack(spacing: 4) {
-                                Text(product.displayName)
-                                    .font(.headline)
-                                    .bold()
-                                Text(product.displayPrice)
-                                    .font(.subheadline)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue, in: RoundedRectangle(cornerRadius: 16))
-                        }
-                        .padding(.horizontal, 40)
-                    }
-                    
-                    Button("Restore Purchases") {
-                        Task { await storeManager.restorePurchases() }
-                    }
-                    .font(.footnote)
-                    .foregroundColor(.gray)
-                }
-            }
-            
-            Spacer()
-            
-            OnboardingNextButton(title: storeManager.isPremium ? "Enter App" : "Continue with Free") {
-                hasCompletedOnboarding = true
-                Task {
-                    await notificationManager.requestAuthorization()
-                    notificationManager.registerNotificationCategories()
-                    notificationManager.scheduleMorningReport(at: 8, minute: 0)
-                }
-            }
+
+    private func finishOnboarding() {
+        hasCompletedOnboarding = true
+        Task {
+            await notificationManager.requestAuthorization()
+            notificationManager.registerNotificationCategories()
+            notificationManager.scheduleMorningReport(at: 8, minute: 0)
         }
     }
-    
-    @ViewBuilder
-    private func featureRow(icon: String, text: String, free: Bool) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(free ? .green : .blue)
-                .frame(width: 24)
-            Text(text)
-                .font(.subheadline)
-                .foregroundColor(free ? .green : .white)
-        }
+
+    var body: some View {
+        // Pass "Continue with Free" directly into the PaywallView so it renders
+        // INSIDE the scroll content — above the legal footer and above the TabView dots.
+        PaywallView(onContinueWithFree: { finishOnboarding() })
+            .environment(storeManager)
+            .environment(notificationManager)
+            .onChange(of: storeManager.isPremium) { _, isPremium in
+                if isPremium { finishOnboarding() }
+            }
     }
 }
