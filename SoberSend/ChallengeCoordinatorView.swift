@@ -11,6 +11,7 @@ struct ChallengeCoordinatorView: View {
     @State private var sequence: [ChallengeType] = []
     
     @Environment(EmergencyUnlockManager.self) private var emergencyManager
+    @Environment(StoreManager.self) private var storeManager
     @Environment(\.modelContext) private var modelContext
     @State private var showEmergencyUnlock = false
     

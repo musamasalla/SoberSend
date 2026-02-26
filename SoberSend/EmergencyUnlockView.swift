@@ -15,8 +15,7 @@ struct EmergencyUnlockView: View {
                     .foregroundColor(.red)
                 
                 Text("Emergency Unlock")
-                    .font(.largeTitle)
-                    .bold()
+                    .font(.largeTitle).bold()
                 
                 Text("This will bypass all locks for exactly 5 minutes. You can only use this once every 24 hours. Face ID is required.")
                     .font(.body)
@@ -24,7 +23,14 @@ struct EmergencyUnlockView: View {
                     .foregroundColor(.gray)
                     .padding(.horizontal)
                 
-                if let errorMessage = errorMessage {
+                // Context note — not a paywall
+                Text("⚠️ This is for genuine emergencies only. SoberSend logs all emergency unlocks.")
+                    .font(.caption)
+                    .foregroundColor(.orange.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 30)
+                
+                if let errorMessage {
                     Text(errorMessage)
                         .foregroundColor(.red)
                         .font(.callout)
@@ -38,8 +44,7 @@ struct EmergencyUnlockView: View {
                 Button(action: triggerUnlock) {
                     HStack {
                         if isAuthenticating {
-                            ProgressView()
-                                .tint(.white)
+                            ProgressView().tint(.white)
                         } else {
                             Image(systemName: "faceid")
                         }
@@ -73,7 +78,7 @@ struct EmergencyUnlockView: View {
         emergencyManager.attemptEmergencyUnlock { success, error in
             isAuthenticating = false
             if success {
-                dismiss() // Close the view on success
+                dismiss()
             } else {
                 errorMessage = error
             }
