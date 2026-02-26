@@ -11,8 +11,13 @@ struct SettingsView: View {
     @State private var endTime: Date = Date()
     @State private var showRestoreAlert = false
     @State private var restoreMessage = ""
+    @State private var showPaywall = false
+    @AppStorage("morningReportEnabled", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var morningReportEnabled: Bool = true
     
     let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
+    
+    // Minimum gap in minutes between start and end
+    private let minimumGapMinutes = 60
     
     var body: some View {
         Form {
@@ -25,7 +30,7 @@ struct SettingsView: View {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
                     }
                 } else {
-                    NavigationLink("Upgrade to Premium") { PaywallView() }
+                    Button("Upgrade to Premium") { showPaywall = true }
                 }
                 Button("Restore Purchases") {
                     Task {
@@ -39,7 +44,7 @@ struct SettingsView: View {
             }
             
             // Schedule
-            Section("Lockdown Schedule") {
+            Section {
                 // Day pills
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Active nights")
@@ -76,25 +81,35 @@ struct SettingsView: View {
                         let c = Calendar.current.dateComponents([.hour, .minute], from: v)
                         lockdownManager.lockStartHour = c.hour ?? 22
                         lockdownManager.lockStartMinute = c.minute ?? 0
+                        enforceMinimumGap(changedStart: true)
                     }
                 DatePicker("Ends", selection: $endTime, displayedComponents: .hourAndMinute)
                     .onChange(of: endTime) { _, v in
                         let c = Calendar.current.dateComponents([.hour, .minute], from: v)
                         lockdownManager.lockEndHour = c.hour ?? 7
                         lockdownManager.lockEndMinute = c.minute ?? 0
+                        enforceMinimumGap(changedStart: false)
                     }
+            } header: { Text("Lockdown Schedule") } footer: {
+                Text("The lockdown window must be at least 1 hour. If start and end are too close, the end time will be adjusted automatically.")
+                    .font(.caption2)
             }
             
             // Notifications
-            Section("Notifications") {
-                HStack {
-                    Text("Morning Report")
-                    Spacer()
-                    if notificationManager.isAuthorized {
-                        Text("Enabled")
-                            .foregroundColor(.green)
-                            .font(.subheadline)
-                    } else {
+            Section {
+                if notificationManager.isAuthorized {
+                    Toggle("Morning Report", isOn: $morningReportEnabled)
+                        .onChange(of: morningReportEnabled) { _, enabled in
+                            if enabled {
+                                notificationManager.scheduleMorningReport(at: 8, minute: 0)
+                            } else {
+                                notificationManager.cancelMorningReport()
+                            }
+                        }
+                } else {
+                    HStack {
+                        Label("Notifications", systemImage: "bell.slash")
+                        Spacer()
                         Button("Enable in Settings") {
                             if let url = URL(string: UIApplication.openSettingsURLString) {
                                 UIApplication.shared.open(url)
@@ -104,15 +119,9 @@ struct SettingsView: View {
                         .foregroundColor(.blue)
                     }
                 }
-                Button("Send Test Notification") {
-                    let content = UNMutableNotificationContent()
-                    content.title = "Last night's report 🛡️"
-                    content.body = "Tap to see who you tried to text last night."
-                    content.sound = .default
-                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
-                    let request = UNNotificationRequest(identifier: "test_notification", content: content, trigger: trigger)
-                    UNUserNotificationCenter.current().add(request)
-                }
+            } header: { Text("Notifications") } footer: {
+                Text("The morning report reminds you every day at 8 AM to review last night's activity.")
+                    .font(.caption2)
             }
             
             // About
@@ -131,11 +140,46 @@ struct SettingsView: View {
         .alert("Restore Purchases", isPresented: $showRestoreAlert) {
             Button("OK", role: .cancel) {}
         } message: { Text(restoreMessage) }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
     }
+    
+    // MARK: - Helpers
     
     private func setWeekends() {
         lockdownManager.setAllDays(active: false)
-        lockdownManager.toggleDay(6)
-        lockdownManager.toggleDay(7)
+        lockdownManager.toggleDay(1) // Sunday
+        lockdownManager.toggleDay(7) // Saturday
+    }
+    
+    /// Ensures at least a 1-hour gap between start and end.
+    /// If start == end or within the gap, push the other time forward.
+    private func enforceMinimumGap(changedStart: Bool) {
+        let startMinutes = lockdownManager.lockStartHour * 60 + lockdownManager.lockStartMinute
+        let endMinutes = lockdownManager.lockEndHour * 60 + lockdownManager.lockEndMinute
+        
+        // Calculate effective gap (handle overnight wrapping: e.g. 22:00→07:00 = 9 hours)
+        let gap: Int
+        if endMinutes > startMinutes {
+            gap = endMinutes - startMinutes
+        } else {
+            gap = (24 * 60 - startMinutes) + endMinutes
+        }
+        
+        if gap < minimumGapMinutes {
+            if changedStart {
+                // Push end forward by 1 hour from start
+                let newEnd = (startMinutes + minimumGapMinutes) % (24 * 60)
+                lockdownManager.lockEndHour = newEnd / 60
+                lockdownManager.lockEndMinute = newEnd % 60
+                endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
+            } else {
+                // Push start back by 1 hour from end
+                var newStart = endMinutes - minimumGapMinutes
+                if newStart < 0 { newStart += 24 * 60 }
+                lockdownManager.lockStartHour = newStart / 60
+                lockdownManager.lockStartMinute = newStart % 60
+                startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
+            }
+        }
     }
 }

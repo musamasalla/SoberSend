@@ -48,14 +48,10 @@ struct SetupView: View {
             
             // Lock Targets
             Section {
-                // Apps
+                // Apps — always open the picker (it replaces the full selection).
+                // Free tier limit is enforced after selection via onChange.
                 Button(action: {
-                    let appCount = lockdownManager.selectionToDiscourage.applicationTokens.count
-                    if !storeManager.isPremium && appCount >= freeAppLimit {
-                        showPaywall = true
-                    } else {
-                        showAppPicker = true
-                    }
+                    showAppPicker = true
                 }) {
                     HStack {
                         Label(
