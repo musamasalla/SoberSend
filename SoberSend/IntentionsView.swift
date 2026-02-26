@@ -67,7 +67,7 @@ struct IntentionsView: View {
                                 Toggle("", isOn: Binding(
                                     get: { contact.isActive },
                                     set: { newValue in
-                                        if !newValue && lockdownManager.isCurrentlyInLockedWindow() {
+                                        if !newValue && lockdownManager.isAppBlockingActive() {
                                             challengingContact = contact
                                         } else {
                                             contact.isActive = newValue

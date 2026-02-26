@@ -12,7 +12,6 @@ struct SetupView: View {
     @State private var isShowingContactPicker = false
     @Binding var showAppPicker: Bool
     @State private var challengingContact: LockedContact? = nil
-    @State private var isManuallyActivated = false
     @State private var showPaywall = false
 
     // Free tier limits
@@ -25,25 +24,25 @@ struct SetupView: View {
             // Status
             Section {
                 HStack {
-                    Image(systemName: lockdownManager.isCurrentlyInLockedWindow() || isManuallyActivated ? "lock.fill" : "lock.open.fill")
-                        .foregroundColor(lockdownManager.isCurrentlyInLockedWindow() || isManuallyActivated ? .red : .green)
+                    Image(systemName: lockdownManager.isAppBlockingActive() ? "lock.fill" : "lock.open.fill")
+                        .foregroundColor(lockdownManager.isAppBlockingActive() ? .red : .green)
                         .font(.title2)
                     VStack(alignment: .leading) {
-                        Text(lockdownManager.isCurrentlyInLockedWindow() || isManuallyActivated ? "Lockdown Active 🔒" : "Lockdown Inactive")
+                        Text(lockdownManager.isAppBlockingActive() ? "Lockdown Active 🔒" : "Lockdown Inactive")
                             .font(.headline)
-                            .foregroundColor(lockdownManager.isCurrentlyInLockedWindow() || isManuallyActivated ? .red : .green)
+                            .foregroundColor(lockdownManager.isAppBlockingActive() ? .red : .green)
                         if lockdownManager.isCurrentlyInLockedWindow() {
-                            Text("Scheduled window")
+                            Text("Scheduled window active")
+                                .font(.caption).foregroundColor(.gray)
+                        } else if lockdownManager.isManuallyActivated {
+                            Text("Manually activated")
                                 .font(.caption).foregroundColor(.gray)
                         }
                     }
                 }
-                Toggle(isOn: $isManuallyActivated) {
+                
+                Toggle(isOn: Bindable(lockdownManager).isManuallyActivated) {
                     Label("Activate Now", systemImage: "bolt.fill")
-                }
-                .onChange(of: isManuallyActivated) { _, active in
-                    if active { lockdownManager.setShieldRestrictions() }
-                    else if !lockdownManager.isCurrentlyInLockedWindow() { lockdownManager.clearRestrictions() }
                 }
             } header: { Text("Status") }
             
@@ -97,7 +96,9 @@ struct SetupView: View {
                 .sheet(isPresented: $isShowingContactPicker) {
                     ContactPickerView().ignoresSafeArea()
                 }
-            } header: { Text("Lock Targets") }
+            } header: { Text("Lock Targets") } footer: {
+                Text("Note: Apple does not allow apps to block contacts directly in iMessage. Locked Contacts tracks who you shouldn't message and requires a challenge before you can remove them.")
+            }
             
             // Locked Contacts with difficulty picker
             if !lockedContacts.isEmpty {
@@ -138,7 +139,7 @@ struct SetupView: View {
                                 Toggle("", isOn: Binding(
                                     get: { contact.isActive },
                                     set: { newValue in
-                                        if !newValue && (lockdownManager.isCurrentlyInLockedWindow() || isManuallyActivated) {
+                                        if !newValue && lockdownManager.isAppBlockingActive() {
                                             challengingContact = contact
                                         } else {
                                             contact.isActive = newValue

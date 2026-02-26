@@ -12,7 +12,7 @@ struct HomeView: View {
         TabView(selection: $activeTab) {
             NavigationStack {
                 SetupView(showAppPicker: $isPresented)
-                    .navigationTitle("Lockdown 🔒")
+                    .navigationTitle(lockdownManager.isAppBlockingActive() ? "Lockdown Active 🔒" : "SoberSend 🛡️")
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button(action: { showIntentions = true }) {

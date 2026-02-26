@@ -7,26 +7,51 @@ import SwiftUI
 @Observable
 class LockdownManager {
     var isAuthorized: Bool = false
+    
+    // Day-of-week bitmask keys in shared defaults
+    @ObservationIgnored private let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") ?? UserDefaults.standard
+    @ObservationIgnored private let selectionKey = "savedFamilyActivitySelection"
+    
     var selectionToDiscourage = FamilyActivitySelection() {
-        didSet { setShieldRestrictions() }
+        didSet {
+            saveSelection()
+            setShieldRestrictions()
+        }
     }
 
-    private let store = ManagedSettingsStore()
-    private var timer: Timer?
+    var isManuallyActivated: Bool {
+        get { sharedDefaults.bool(forKey: "isManuallyActive") }
+        set {
+            sharedDefaults.set(newValue, forKey: "isManuallyActive")
+            setShieldRestrictions()
+        }
+    }
 
-    // Day-of-week bitmask keys in shared defaults:
-    // bit 0 = Sunday, bit 1 = Monday, ... bit 6 = Saturday (matches Calendar.component(.weekday))
-    // Default: every day (0b1111111 = 127)
-    private let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") ?? UserDefaults.standard
-    
     var activeDaysMask: Int {
         get { sharedDefaults.object(forKey: "activeDaysMask") == nil ? 127 : sharedDefaults.integer(forKey: "activeDaysMask") }
         set { sharedDefaults.set(newValue, forKey: "activeDaysMask") }
     }
 
+    private let store = ManagedSettingsStore()
+    private var timer: Timer?
+
     init() {
+        loadSelection()
         checkAuthorization()
         startScheduleMonitoring()
+    }
+
+    private func saveSelection() {
+        if let data = try? JSONEncoder().encode(selectionToDiscourage) {
+            sharedDefaults.set(data, forKey: selectionKey)
+        }
+    }
+
+    private func loadSelection() {
+        if let data = sharedDefaults.data(forKey: selectionKey),
+           let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
+            selectionToDiscourage = selection
+        }
     }
 
     func requestAuthorization() async {
@@ -46,7 +71,7 @@ class LockdownManager {
     }
 
     func setShieldRestrictions() {
-        if isCurrentlyInLockedWindow() {
+        if isAppBlockingActive() {
             store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
             store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
             store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
@@ -69,9 +94,6 @@ class LockdownManager {
         }
     }
 
-    // MARK: - Day-of-week helpers
-    
-    /// Returns true if the given Calendar weekday (1=Sunday...7=Saturday) is active
     func isDayActive(_ calendarWeekday: Int) -> Bool {
         let bit = 1 << (calendarWeekday - 1)
         return (activeDaysMask & bit) != 0
@@ -89,6 +111,10 @@ class LockdownManager {
     }
 
     // MARK: - Window Check
+    public func isAppBlockingActive() -> Bool {
+        return isCurrentlyInLockedWindow() || isManuallyActivated
+    }
+
     public func isCurrentlyInLockedWindow() -> Bool {
         let startHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
         let startMinute = sharedDefaults.integer(forKey: "lockStartMinute")
@@ -110,7 +136,6 @@ class LockdownManager {
         if startToday <= endToday {
             return now >= startToday && now <= endToday
         } else {
-            // Crosses midnight — also check if yesterday was enabled for the "after midnight" portion
             let yesterdayWeekday = calendar.component(.weekday, from: calendar.date(byAdding: .day, value: -1, to: now) ?? now)
             let afterMidnight = now <= endToday
             if afterMidnight && !isDayActive(yesterdayWeekday) { return false }
