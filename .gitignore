@@ -1,0 +1,35 @@
+# Xcode
+#
+# gitignore contributors: switch to the 
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+
+# Android Studio
+#
+.idea/
+
+# macOS
+#
+.DS_Store
+*.swp
+*.lock
+
+# Swift Package Manager
+#
+.build/
+.swiftpm/
+
+# User-specific
+#
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+
+# Ruby / CocoaPods (if used)
+#
+vendor/bundle/
+.bundle/

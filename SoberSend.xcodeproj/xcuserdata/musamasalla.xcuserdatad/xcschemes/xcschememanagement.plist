@@ -9,6 +9,44 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>SoberSendShieldAction.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>SoberSendShieldConfig.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>SoberSendWidgetExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>E81F4E372F501269008DF02C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E85C3E3C2F503C6D00BE5BC3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E85C3E512F503C9600BE5BC3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E8B674C32F501D410055480D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 	</dict>
 </dict>
 </plist>

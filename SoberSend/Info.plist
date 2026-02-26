@@ -6,5 +6,9 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>SoberSend requires Speech Recognition to analyze the tongue twister challenge and verify you are sober.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SoberSend needs the microphone to listen to you reading the tongue twister challenge.</string>
 </dict>
 </plist>

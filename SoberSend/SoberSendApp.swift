@@ -12,7 +12,8 @@ import SwiftData
 struct SoberSendApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            LockedContact.self,
+            ChallengeAttempt.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,11 +23,14 @@ struct SoberSendApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    @State private var emergencyManager = EmergencyUnlockManager()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .environment(emergencyManager)
     }
 }
