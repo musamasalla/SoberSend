@@ -126,8 +126,8 @@ struct SettingsView: View {
             
             // About
             Section("About") {
-                Link("Privacy Policy", destination: URL(string: "https://musamasalla.github.io/SoberSend/privacy")!)
-                Link("Terms of Service", destination: URL(string: "https://musamasalla.github.io/SoberSend/terms")!)
+                Link("Privacy Policy", destination: URL(string: "https://musamasalla.github.io/SoberSend/privacy.html")!)
+                Link("Terms of Service", destination: URL(string: "https://musamasalla.github.io/SoberSend/terms.html")!)
                 Text("Version 1.0.0").foregroundColor(.gray)
             }
         }

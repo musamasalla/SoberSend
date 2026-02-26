@@ -378,6 +378,15 @@ struct PaywallView: View {
                 .foregroundStyle(.white.opacity(0.25))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+
+            HStack(spacing: 16) {
+                Link("Privacy Policy", destination: URL(string: "https://musamasalla.github.io/SoberSend/privacy.html")!)
+                Text("·").foregroundStyle(.white.opacity(0.2))
+                Link("Terms of Service", destination: URL(string: "https://musamasalla.github.io/SoberSend/terms.html")!)
+            }
+            .font(.caption2)
+            .foregroundStyle(.white.opacity(0.3))
+            .padding(.top, 4)
         }
         .padding(.top, 20)
     }
