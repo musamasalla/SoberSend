@@ -7,50 +7,37 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            FloatingOrbsBackground()
+            SoberTheme.background.ignoresSafeArea()
             
             TabView(selection: $currentStep) {
-                WelcomeView(currentStep: $currentStep)
-                    .tag(0)
-                
-                SelectDangerContactsView(currentStep: $currentStep)
-                    .tag(1)
-                
-                SetScheduleView(currentStep: $currentStep)
-                    .tag(2)
-                
-                DemoChallengeView(currentStep: $currentStep)
-                    .tag(3)
-                
-                SetIntentionsView(currentStep: $currentStep)
-                    .tag(4)
-                
-                OnboardingPaywallStep()
-                    .tag(5)
+                WelcomeView(currentStep: $currentStep).tag(0)
+                SelectDangerContactsView(currentStep: $currentStep).tag(1)
+                SetScheduleView(currentStep: $currentStep).tag(2)
+                DemoChallengeView(currentStep: $currentStep).tag(3)
+                SetIntentionsView(currentStep: $currentStep).tag(4)
+                OnboardingPaywallStep().tag(5)
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .animation(.easeInOut, value: currentStep)
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
 
-// MARK: - Shared Next Button
+// MARK: - Next Button
 struct OnboardingNextButton: View {
     let title: String
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            Text(title)
-        }
-        .buttonStyle(SoberPrimaryButtonStyle(color: SoberTheme.lavender))
-        .padding(.horizontal, 40)
-        .padding(.bottom, 50)
+        Button(action: action) { Text(title) }
+            .buttonStyle(SoberPrimaryButtonStyle())
+            .padding(.horizontal, 40)
+            .padding(.bottom, 50)
     }
 }
 
-// MARK: - Welcome View
+// MARK: - Welcome
 struct WelcomeView: View {
     @Binding var currentStep: Int
     @State private var showLock = false
@@ -59,42 +46,34 @@ struct WelcomeView: View {
         VStack(spacing: 30) {
             Spacer()
             
-            // Animated lock
             ZStack {
                 Circle()
-                    .fill(SoberTheme.lavender.opacity(0.1))
+                    .fill(SoberTheme.lavenderCard)
                     .frame(width: 120, height: 120)
                     .scaleEffect(showLock ? 1.0 : 0.8)
-                
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 56))
-                    .foregroundStyle(SoberTheme.lavender)
+                    .foregroundStyle(SoberTheme.lavenderText)
                     .scaleEffect(showLock ? 1.0 : 0.5)
-                    .opacity(showLock ? 1.0 : 0.0)
+                    .opacity(showLock ? 1.0 : 0)
             }
             .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.3)) {
-                    showLock = true
-                }
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.3)) { showLock = true }
             }
             
             Text("We both know\nwhy you're here.")
                 .font(SoberTheme.title(34))
                 .multilineTextAlignment(.center)
-                .foregroundColor(.white)
-                .padding(.horizontal)
+                .foregroundStyle(SoberTheme.textPrimary)
             
             Text("Let's set up your lockdown before you make any decisions you'll regret tomorrow.")
                 .font(SoberTheme.body(17))
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             
             Spacer()
-            
-            OnboardingNextButton(title: "Let's do this") {
-                withAnimation { currentStep += 1 }
-            }
+            OnboardingNextButton(title: "Let's do this") { withAnimation { currentStep += 1 } }
         }
     }
 }
@@ -108,11 +87,11 @@ struct SelectDangerContactsView: View {
         VStack(spacing: 24) {
             Text("Who's on the list? 🫣")
                 .font(SoberTheme.title(30))
-                .foregroundColor(.white)
+                .foregroundStyle(SoberTheme.textPrimary)
                 .padding(.top, 40)
             
             Text("Select the apps or contacts you can't be trusted with after 10 PM.\n(First one is free).")
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
@@ -122,40 +101,35 @@ struct SelectDangerContactsView: View {
             VStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(lockdownManager.isAuthorized ? SoberTheme.mint.opacity(0.15) : SoberTheme.lavender.opacity(0.15))
+                        .fill(lockdownManager.isAuthorized ? SoberTheme.mintCard : SoberTheme.lavenderCard)
                         .frame(width: 100, height: 100)
                     Image(systemName: lockdownManager.isAuthorized ? "checkmark.shield.fill" : "shield.lefthalf.filled")
                         .font(.system(size: 44))
-                        .foregroundColor(lockdownManager.isAuthorized ? SoberTheme.mint : SoberTheme.lavender)
+                        .foregroundStyle(lockdownManager.isAuthorized ? SoberTheme.mintText : SoberTheme.lavenderText)
                 }
                 
                 if lockdownManager.isAuthorized {
                     Text("Screen Time Access Granted")
-                        .foregroundColor(SoberTheme.mint)
+                        .foregroundStyle(SoberTheme.mintText)
                         .font(SoberTheme.headline())
                 } else {
                     Text("We need Screen Time access to block apps and contacts during your lockdown window.")
                         .font(SoberTheme.body())
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
                 
-                Button(action: {
-                    Task { await lockdownManager.requestAuthorization() }
-                }) {
+                Button { Task { await lockdownManager.requestAuthorization() } } label: {
                     Text(lockdownManager.isAuthorized ? "Access Granted ✓" : "Grant Screen Time Access")
                 }
-                .buttonStyle(SoberPrimaryButtonStyle(color: lockdownManager.isAuthorized ? SoberTheme.mint : SoberTheme.lavender))
+                .buttonStyle(SoberPrimaryButtonStyle(color: lockdownManager.isAuthorized ? SoberTheme.mintText : SoberTheme.ctaBlack))
                 .disabled(lockdownManager.isAuthorized)
                 .padding(.horizontal, 40)
             }
             
             Spacer()
-            
-            OnboardingNextButton(title: "Next") {
-                withAnimation { currentStep += 1 }
-            }
+            OnboardingNextButton(title: "Next") { withAnimation { currentStep += 1 } }
         }
     }
 }
@@ -174,21 +148,20 @@ struct SetScheduleView: View {
         VStack(spacing: 28) {
             Text("When are you\ndangerous? 🌙")
                 .font(SoberTheme.title(30))
-                .foregroundColor(.white)
+                .foregroundStyle(SoberTheme.textPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 40)
             
             Text("Default is 10 PM to 7 AM.\nBe honest with yourself.")
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
-                .padding(.horizontal)
             
             // Day selector
             VStack(alignment: .leading, spacing: 10) {
                 Text("Active nights")
                     .font(SoberTheme.caption())
-                    .foregroundColor(SoberTheme.textSecondary)
+                    .foregroundStyle(SoberTheme.textSecondary)
                     .textCase(.uppercase)
                     .tracking(0.5)
                 
@@ -198,19 +171,13 @@ struct SetScheduleView: View {
                         let isActive = lockdownManager.isDayActive(weekday)
                         let isWeekend = weekday == 6 || weekday == 7
                         
-                        Button(action: {
-                            lockdownManager.toggleDay(weekday)
-                        }) {
+                        Button { lockdownManager.toggleDay(weekday) } label: {
                             Text(dayLabels[i])
                                 .font(SoberTheme.caption(13))
                                 .fontWeight(.bold)
                                 .frame(width: 38, height: 38)
-                                .background(
-                                    isActive
-                                    ? (isWeekend ? SoberTheme.peach : SoberTheme.lavender)
-                                    : SoberTheme.surfaceBright
-                                )
-                                .foregroundColor(isActive ? SoberTheme.charcoal : SoberTheme.textSecondary)
+                                .background(isActive ? (isWeekend ? SoberTheme.peachCard : SoberTheme.lavenderCard) : Color.gray.opacity(0.12))
+                                .foregroundStyle(isActive ? (isWeekend ? SoberTheme.peachText : SoberTheme.lavenderText) : SoberTheme.textSecondary)
                                 .clipShape(Circle())
                         }
                     }
@@ -218,11 +185,9 @@ struct SetScheduleView: View {
                 
                 HStack(spacing: 12) {
                     Button("Weekends") { setWeekends() }
-                        .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.peach)
+                        .font(SoberTheme.caption()).foregroundStyle(SoberTheme.peachText)
                     Button("Every Night") { lockdownManager.setAllDays(active: true) }
-                        .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.lavender)
+                        .font(SoberTheme.caption()).foregroundStyle(SoberTheme.lavenderText)
                 }
             }
             .soberCard()
@@ -231,7 +196,7 @@ struct SetScheduleView: View {
             // Time pickers
             VStack(spacing: 16) {
                 HStack {
-                    Image(systemName: "moon.fill").foregroundColor(SoberTheme.lavender)
+                    Image(systemName: "moon.fill").foregroundStyle(SoberTheme.lavenderText)
                     DatePicker("Lockdown starts", selection: $startTime, displayedComponents: .hourAndMinute)
                         .onChange(of: startTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -239,9 +204,9 @@ struct SetScheduleView: View {
                             lockdownManager.lockStartMinute = c.minute ?? 0
                         }
                 }
-                Divider().background(SoberTheme.border)
+                Divider()
                 HStack {
-                    Image(systemName: "sunrise.fill").foregroundColor(SoberTheme.peach)
+                    Image(systemName: "sunrise.fill").foregroundStyle(SoberTheme.peachText)
                     DatePicker("Lockdown ends", selection: $endTime, displayedComponents: .hourAndMinute)
                         .onChange(of: endTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -254,10 +219,7 @@ struct SetScheduleView: View {
             .padding(.horizontal, 30)
             
             Spacer()
-            
-            OnboardingNextButton(title: "Next") {
-                withAnimation { currentStep += 1 }
-            }
+            OnboardingNextButton(title: "Next") { withAnimation { currentStep += 1 } }
         }
         .onAppear {
             startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
@@ -272,8 +234,7 @@ struct SetScheduleView: View {
     }
 }
 
-
-// MARK: - Demo Challenge (Real Math Problem)
+// MARK: - Demo Challenge
 struct DemoChallengeView: View {
     @Binding var currentStep: Int
     @State private var demoPassed = false
@@ -288,11 +249,11 @@ struct DemoChallengeView: View {
         VStack(spacing: 24) {
             Text("The Vibe Check 🧠")
                 .font(SoberTheme.title(30))
-                .foregroundColor(.white)
+                .foregroundStyle(SoberTheme.textPrimary)
                 .padding(.top, 40)
             
             Text("Try this while you're sober.\nImagine doing it at 2 AM after 6 drinks.")
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
@@ -303,17 +264,17 @@ struct DemoChallengeView: View {
                 VStack(spacing: 16) {
                     ZStack {
                         Circle()
-                            .fill(SoberTheme.mint.opacity(0.15))
+                            .fill(SoberTheme.mintCard)
                             .frame(width: 100, height: 100)
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 50))
-                            .foregroundColor(SoberTheme.mint)
+                            .foregroundStyle(SoberTheme.mintText)
                     }
                     Text("You passed. Easy, right?")
                         .font(SoberTheme.headline(20))
-                        .foregroundColor(.white)
+                        .foregroundStyle(SoberTheme.textPrimary)
                     Text("Now imagine doing that after a few drinks. That's the point.")
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                         .font(SoberTheme.body())
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
@@ -322,46 +283,38 @@ struct DemoChallengeView: View {
                 VStack(spacing: 20) {
                     Text("Solve this:")
                         .font(SoberTheme.headline())
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                     
                     Text("\(num1) + \(num2) = ?")
                         .font(SoberTheme.mono(44))
-                        .foregroundColor(SoberTheme.lavender)
+                        .foregroundStyle(SoberTheme.lavenderText)
                     
                     TextField("Your answer", text: $userAnswer)
                         .keyboardType(.numberPad)
                         .font(SoberTheme.mono(28))
                         .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
+                        .foregroundStyle(SoberTheme.textPrimary)
                         .padding()
-                        .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(showWrong ? SoberTheme.peach : SoberTheme.border, lineWidth: 1)
-                        )
+                        .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: showWrong ? SoberTheme.peachCard : .black.opacity(0.06), radius: 8)
                         .padding(.horizontal, 60)
                     
                     if showWrong {
                         Text("Nope. Try again.")
-                            .foregroundColor(SoberTheme.peach)
+                            .foregroundStyle(SoberTheme.peachText)
                             .font(SoberTheme.body())
                             .fontWeight(.semibold)
                     }
                     
-                    Button(action: checkDemo) {
-                        Text("Submit")
-                    }
-                    .buttonStyle(SoberPrimaryButtonStyle(color: userAnswer.isEmpty ? SoberTheme.surfaceBright : SoberTheme.lavender))
-                    .disabled(userAnswer.isEmpty)
-                    .padding(.horizontal, 40)
+                    Button(action: checkDemo) { Text("Submit") }
+                        .buttonStyle(SoberPrimaryButtonStyle(color: userAnswer.isEmpty ? .gray.opacity(0.3) : SoberTheme.ctaBlack))
+                        .disabled(userAnswer.isEmpty)
+                        .padding(.horizontal, 40)
                 }
             }
             
             Spacer()
-            
-            OnboardingNextButton(title: demoPassed ? "Next" : "Skip Demo") {
-                withAnimation { currentStep += 1 }
-            }
+            OnboardingNextButton(title: demoPassed ? "Next" : "Skip Demo") { withAnimation { currentStep += 1 } }
         }
     }
     
@@ -376,9 +329,7 @@ struct DemoChallengeView: View {
             HapticManager.shared.notification(type: .error)
             SoundManager.shared.playError()
             userAnswer = ""
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                showWrong = false
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { showWrong = false }
         }
     }
 }
@@ -394,11 +345,11 @@ struct SetIntentionsView: View {
         VStack(spacing: 24) {
             Text("Notes to future you ✍️")
                 .font(SoberTheme.title(30))
-                .foregroundColor(.white)
+                .foregroundStyle(SoberTheme.textPrimary)
                 .padding(.top, 40)
             
             Text("Write yourself a sober note. We'll show this to you when you try to unlock an app or contact.")
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
@@ -406,7 +357,7 @@ struct SetIntentionsView: View {
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $intentionText)
                     .focused($isFocused)
-                    .foregroundColor(.white)
+                    .foregroundStyle(SoberTheme.textPrimary)
                     .font(SoberTheme.body())
                     .scrollContentBackground(.hidden)
                     .padding(12)
@@ -414,35 +365,30 @@ struct SetIntentionsView: View {
                 
                 if intentionText.isEmpty {
                     Text("e.g., \"You already texted him twice this week. Don't do it.\"")
-                        .foregroundColor(SoberTheme.textSecondary.opacity(0.5))
+                        .foregroundStyle(SoberTheme.textSecondary.opacity(0.5))
                         .font(SoberTheme.body())
                         .padding(.top, 20)
                         .padding(.leading, 16)
                         .allowsHitTesting(false)
                 }
             }
-            .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(SoberTheme.lavender.opacity(0.2), lineWidth: 1))
+            .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
             .padding(.horizontal, 30)
             
             Spacer()
-            
             OnboardingNextButton(title: "Next") {
                 soberNote = intentionText
                 isFocused = false
                 withAnimation { currentStep += 1 }
             }
         }
-        .onAppear {
-            intentionText = soberNote
-        }
-        .onTapGesture {
-            isFocused = false
-        }
+        .onAppear { intentionText = soberNote }
+        .onTapGesture { isFocused = false }
     }
 }
 
-// MARK: - Onboarding Paywall Step
+// MARK: - Paywall Step
 struct OnboardingPaywallStep: View {
     @Environment(StoreManager.self) private var storeManager
     @Environment(NotificationManager.self) private var notificationManager

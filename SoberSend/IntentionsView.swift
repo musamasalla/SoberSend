@@ -16,29 +16,26 @@ struct IntentionsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                SoberTheme.charcoal.ignoresSafeArea()
+                SoberTheme.background.ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Header
                         VStack(spacing: 8) {
                             Text("Heading Out? 🍻")
                                 .font(SoberTheme.title(28))
-                                .foregroundColor(.white)
-                            
+                                .foregroundStyle(SoberTheme.textPrimary)
                             Text("Write a note to yourself. We'll show it to you if you try to open these locked apps/contacts.")
-                                .foregroundColor(SoberTheme.textSecondary)
+                                .foregroundStyle(SoberTheme.textSecondary)
                                 .font(SoberTheme.body())
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
                         .padding(.top, 8)
                         
-                        // Text editor
                         ZStack(alignment: .topLeading) {
                             TextEditor(text: $intentionText)
                                 .focused($isFocused)
-                                .foregroundColor(.white)
+                                .foregroundStyle(SoberTheme.textPrimary)
                                 .font(SoberTheme.body())
                                 .scrollContentBackground(.hidden)
                                 .padding(12)
@@ -46,21 +43,19 @@ struct IntentionsView: View {
                             
                             if intentionText.isEmpty {
                                 Text("e.g. \"You already texted him twice this week. Stop.\"")
-                                    .foregroundColor(SoberTheme.textSecondary.opacity(0.5))
+                                    .foregroundStyle(SoberTheme.textSecondary.opacity(0.5))
                                     .font(SoberTheme.body())
-                                    .padding(.top, 20)
-                                    .padding(.leading, 16)
+                                    .padding(.top, 20).padding(.leading, 16)
                                     .allowsHitTesting(false)
                             }
                         }
-                        .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(SoberTheme.lavender.opacity(0.2), lineWidth: 1))
+                        .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
                         .padding(.horizontal)
                         
-                        // Quick-lock targets
                         if !contacts.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                SoberSectionHeader(title: "Quick-Lock Targets", icon: "person.2.fill", color: SoberTheme.skyBlue)
+                                SoberSectionHeader(title: "Quick-Lock Targets", icon: "person.2.fill")
                                     .padding(.horizontal, 4)
                                 
                                 VStack(spacing: 0) {
@@ -68,29 +63,21 @@ struct IntentionsView: View {
                                         HStack {
                                             Text(contact.displayName)
                                                 .font(SoberTheme.body())
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(SoberTheme.textPrimary)
                                             Spacer()
                                             Toggle("", isOn: Binding(
                                                 get: { contact.isActive },
                                                 set: { newValue in
-                                                    if !newValue && lockdownManager.isAppBlockingActive() {
-                                                        challengingContact = contact
-                                                    } else {
-                                                        contact.isActive = newValue
-                                                        try? modelContext.save()
-                                                    }
+                                                    if !newValue && lockdownManager.isAppBlockingActive() { challengingContact = contact }
+                                                    else { contact.isActive = newValue; try? modelContext.save() }
                                                 }
                                             ))
-                                            .toggleStyle(SoberToggleStyle(onColor: SoberTheme.peach))
                                             .labelsHidden()
                                         }
                                         .padding(.vertical, 12)
                                         .padding(.horizontal, 16)
-                                        
                                         if contact.id != contacts.last?.id {
-                                            Divider()
-                                                .background(SoberTheme.border)
-                                                .padding(.leading, 16)
+                                            Divider().padding(.leading, 16)
                                         }
                                     }
                                 }
@@ -99,13 +86,10 @@ struct IntentionsView: View {
                             .padding(.horizontal)
                         }
                         
-                        // Save button
-                        Button(action: saveIntentions) {
-                            Text("Lock It Down 🔒")
-                        }
-                        .buttonStyle(SoberPrimaryButtonStyle(color: SoberTheme.lavender))
-                        .padding(.horizontal)
-                        .padding(.bottom, 30)
+                        Button { saveIntentions() } label: { Text("Lock It Down 🔒") }
+                            .buttonStyle(SoberPrimaryButtonStyle())
+                            .padding(.horizontal)
+                            .padding(.bottom, 30)
                     }
                 }
             }
@@ -113,24 +97,16 @@ struct IntentionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .foregroundColor(SoberTheme.textSecondary)
+                    Button("Cancel") { dismiss() }.foregroundStyle(SoberTheme.textSecondary)
                 }
             }
             .onTapGesture { isFocused = false }
         }
-        .preferredColorScheme(.dark)
-        .onAppear {
-            intentionText = globalSoberNote
-        }
+        .preferredColorScheme(.light)
+        .onAppear { intentionText = globalSoberNote }
         .fullScreenCover(item: $challengingContact) { contact in
             ChallengeCoordinatorView(contactOrAppName: contact.displayName, difficulty: contact.difficulty, soberNote: contact.soberNote) { passed in
-                if passed {
-                    if let ctx = contact.modelContext {
-                        contact.isActive = false
-                        try? ctx.save()
-                    }
-                }
+                if passed { if let ctx = contact.modelContext { contact.isActive = false; try? ctx.save() } }
                 challengingContact = nil
             }
         }
@@ -138,11 +114,7 @@ struct IntentionsView: View {
     
     private func saveIntentions() {
         globalSoberNote = intentionText
-        for contact in contacts {
-            if !intentionText.isEmpty {
-                contact.soberNote = intentionText
-            }
-        }
+        for contact in contacts { if !intentionText.isEmpty { contact.soberNote = intentionText } }
         try? modelContext.save()
         dismiss()
     }

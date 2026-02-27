@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Shareable Card View (rendered to image)
+// MARK: - Shareable Card View
 struct MorningReportCardView: View {
     let saves: Int
     let streak: Int
@@ -9,33 +9,24 @@ struct MorningReportCardView: View {
     
     var body: some View {
         ZStack {
-            // Soft pastel background
             RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [SoberTheme.charcoal, SoberTheme.surface],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(SoberTheme.lavender.opacity(0.2), lineWidth: 1)
-                )
+                .fill(SoberTheme.card)
+                .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
             
             VStack(spacing: 16) {
                 HStack {
                     HStack(spacing: 6) {
                         Image(systemName: "lock.shield.fill")
                             .font(.system(size: 12))
-                            .foregroundColor(SoberTheme.lavender)
+                            .foregroundStyle(SoberTheme.lavenderText)
                         Text("SoberSend")
                             .font(SoberTheme.caption())
-                            .foregroundColor(SoberTheme.lavender)
+                            .foregroundStyle(SoberTheme.lavenderText)
                     }
                     Spacer()
                     Text(date, format: .dateTime.weekday(.wide).month().day())
                         .font(SoberTheme.caption(11))
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
                 
                 Spacer()
@@ -47,26 +38,25 @@ struct MorningReportCardView: View {
                          : "Survived the night clean")
                         .font(SoberTheme.headline(18))
                         .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
+                        .foregroundStyle(SoberTheme.textPrimary)
                     Text(saves > 0 ? "You'll thank yourself this morning." : "You're basically a saint.")
                         .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
                 
                 Spacer()
                 
                 HStack {
                     HStack(spacing: 4) {
-                        Text("🔥")
-                            .font(.system(size: 12))
+                        Text("🔥").font(.system(size: 12))
                         Text("\(streak) night streak")
                             .font(SoberTheme.caption(12))
-                            .foregroundColor(SoberTheme.peach)
+                            .foregroundStyle(SoberTheme.peachText)
                     }
                     Spacer()
                     Text("I survived another night 💪")
                         .font(SoberTheme.caption(11))
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
             }
             .padding(24)
@@ -116,39 +106,29 @@ struct MorningReportView: View {
     }
     
     var body: some View {
-        ZStack {
-            FloatingOrbsBackground()
-            
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 20) {
-                    if overnightAttempts.isEmpty {
-                        emptyState
-                    } else {
-                        // Greeting
-                        Text(greeting)
-                            .font(SoberTheme.headline(22))
-                            .foregroundColor(SoberTheme.cream)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 4)
-                        
-                        // Summary card
-                        summaryCard
-                        
-                        // Share card
-                        shareSection
-                        
-                        // Activity logs
-                        logsSection
-                    }
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 20) {
+                if overnightAttempts.isEmpty {
+                    emptyState
+                } else {
+                    Text(greeting)
+                        .font(SoberTheme.title(24))
+                        .foregroundStyle(SoberTheme.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
                     
-                    Spacer(minLength: 100)
+                    summaryCard
+                    shareSection
+                    logsSection
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                Spacer(minLength: 100)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
         }
+        .background(SoberTheme.background.ignoresSafeArea())
         .navigationTitle("Morning Report")
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .sheet(isPresented: $isShowingShareSheet) {
             if let img = shareImage {
@@ -157,140 +137,113 @@ struct MorningReportView: View {
         }
     }
     
-    // MARK: - Empty State
-    
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer(minLength: 60)
-            
             Image(systemName: "moon.zzz.fill")
                 .font(.system(size: 50))
-                .foregroundColor(SoberTheme.lavender.opacity(0.5))
-            
+                .foregroundStyle(SoberTheme.textSecondary.opacity(0.5))
             Text("No activity last night")
                 .font(SoberTheme.headline(20))
-                .foregroundColor(.white)
-            
+                .foregroundStyle(SoberTheme.textPrimary)
             Text("You didn't try to unlock anything.\nResponsible. Boring. But responsible.")
                 .font(SoberTheme.body())
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .multilineTextAlignment(.center)
-            
             Spacer()
         }
     }
     
-    // MARK: - Summary Card
-    
     private var summaryCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Last Night's Damage Report")
-                .font(SoberTheme.headline(18))
-                .foregroundColor(.white)
-            
-            Text(saves > 0
-                 ? "SoberSend blocked you \(saves) time\(saves == 1 ? "" : "s"). Nice save. 🛡️"
-                 : "You passed your challenges. Hope it was worth it. 😅")
-                .font(SoberTheme.body())
-                .foregroundColor(SoberTheme.textSecondary)
+        PastelAccentCard(bgColor: saves > 0 ? SoberTheme.mintCard : SoberTheme.creamCard) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Last Night's Damage Report")
+                    .font(SoberTheme.headline(18))
+                    .foregroundStyle(SoberTheme.textPrimary)
+                Text(saves > 0
+                     ? "SoberSend blocked you \(saves) time\(saves == 1 ? "" : "s"). Nice save. 🛡️"
+                     : "You passed your challenges. Hope it was worth it. 😅")
+                    .font(SoberTheme.body())
+                    .foregroundStyle(SoberTheme.textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .soberCard()
     }
-    
-    // MARK: - Share Section
     
     private var shareSection: some View {
         VStack(spacing: 12) {
-            SoberSectionHeader(title: "Share Your Survival", icon: "square.and.arrow.up", color: SoberTheme.lavender)
+            SoberSectionHeader(title: "Share Your Survival", icon: "square.and.arrow.up")
             
             ZStack {
                 MorningReportCardView(saves: saves, streak: currentStreak, date: Date())
                 
-                // Premium overlay
                 if !storeManager.isPremium {
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(SoberTheme.charcoal.opacity(0.75))
-                    
+                        .fill(.white.opacity(0.8))
                     VStack(spacing: 8) {
                         Image(systemName: "lock.fill")
                             .font(.title)
-                            .foregroundColor(SoberTheme.lavender)
+                            .foregroundStyle(SoberTheme.lavenderText)
                         Text("Premium Feature")
                             .font(SoberTheme.headline())
-                            .foregroundColor(.white)
+                            .foregroundStyle(SoberTheme.textPrimary)
                         Text("Upgrade to share your report")
                             .font(SoberTheme.caption())
-                            .foregroundColor(SoberTheme.textSecondary)
+                            .foregroundStyle(SoberTheme.textSecondary)
                     }
                 }
             }
             .frame(height: 200)
             
-            Button(action: {
-                if storeManager.isPremium {
-                    renderAndShare()
-                } else {
-                    showPaywall = true
-                }
-            }) {
+            Button {
+                if storeManager.isPremium { renderAndShare() } else { showPaywall = true }
+            } label: {
                 Text(storeManager.isPremium ? "Share Card" : "⭐️ Upgrade to Share")
             }
-            .buttonStyle(storeManager.isPremium
-                         ? SoberPrimaryButtonStyle(color: SoberTheme.lavender)
-                         : SoberPrimaryButtonStyle(color: SoberTheme.lavender))
+            .buttonStyle(SoberPrimaryButtonStyle())
         }
     }
     
-    // MARK: - Logs
-    
     private var logsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "The Logs", icon: "list.bullet", color: SoberTheme.skyBlue)
+            SoberSectionHeader(title: "The Logs", icon: "list.bullet")
             
             VStack(spacing: 0) {
                 ForEach(Array(overnightAttempts.enumerated()), id: \.element.id) { index, attempt in
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(attempt.unlockGranted ? SoberTheme.peach.opacity(0.15) : SoberTheme.mint.opacity(0.15))
+                                .fill(attempt.unlockGranted ? SoberTheme.peachCard : SoberTheme.mintCard)
                                 .frame(width: 36, height: 36)
                             Image(systemName: attempt.unlockGranted ? "exclamationmark.triangle.fill" : "shield.fill")
                                 .font(.system(size: 14))
-                                .foregroundColor(attempt.unlockGranted ? SoberTheme.peach : SoberTheme.mint)
+                                .foregroundStyle(attempt.unlockGranted ? SoberTheme.peachText : SoberTheme.mintText)
                         }
-                        
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Tried to unlock \(attempt.contactOrApp)")
                                 .font(SoberTheme.headline(14))
-                                .foregroundColor(.white)
+                                .foregroundStyle(SoberTheme.textPrimary)
                             Text(attempt.timestamp, format: .dateTime.hour().minute())
                                 .font(SoberTheme.caption())
-                                .foregroundColor(SoberTheme.textSecondary)
+                                .foregroundStyle(SoberTheme.textSecondary)
                         }
-                        
                         Spacer()
-                        
                         SoberPill(
                             text: attempt.unlockGranted ? "Got Through" : "Blocked",
-                            color: attempt.unlockGranted ? SoberTheme.peach : SoberTheme.mint,
+                            bgColor: attempt.unlockGranted ? SoberTheme.peachCard : SoberTheme.mintCard,
+                            fgColor: attempt.unlockGranted ? SoberTheme.peachText : SoberTheme.mintText,
                             small: true
                         )
                     }
                     .padding(.vertical, 10)
-                    
                     if index < overnightAttempts.count - 1 {
-                        Divider()
-                            .background(SoberTheme.border)
-                            .padding(.leading, 48)
+                        Divider().padding(.leading, 48)
                     }
                 }
             }
             .soberCard()
         }
     }
-    
-    // MARK: - Render
     
     private func renderAndShare() {
         let card = MorningReportCardView(saves: saves, streak: currentStreak, date: Date())
@@ -303,7 +256,6 @@ struct MorningReportView: View {
     }
 }
 
-// MARK: - UIActivityViewController wrapper
 struct ShareSheet: UIViewControllerRepresentable {
     let activityItems: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {

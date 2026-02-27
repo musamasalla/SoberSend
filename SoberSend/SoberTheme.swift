@@ -1,46 +1,46 @@
 import SwiftUI
 
-// MARK: - SoberSend Pastel Dark Design System
+// MARK: - SoberSend Light Pastel Design System
+// Inspired by Drops / Duolingo — light, airy, clean, playful.
 
-/// "Soft Rebellion" — calm pastels on deep charcoal.
-/// A caring friend, not a drill sergeant.
 enum SoberTheme {
     
-    // MARK: - Color Palette
+    // MARK: - Core Colors
     
-    /// Primary accent — used for buttons, active states, selections
-    static let lavender = Color(red: 0.72, green: 0.66, blue: 0.91)      // #B8A9E8
-    /// Success states — streaks, completed, safe
-    static let mint = Color(red: 0.66, green: 0.90, blue: 0.81)           // #A8E6CF
-    /// Danger/warning — locked, alerts, peach warmth
-    static let peach = Color(red: 1.00, green: 0.72, blue: 0.70)          // #FFB7B2
-    /// Info, secondary accent
-    static let skyBlue = Color(red: 0.68, green: 0.78, blue: 0.81)        // #AEC6CF
-    /// Highlight text, warm emphasis
-    static let cream = Color(red: 1.00, green: 0.96, blue: 0.89)          // #FFF5E4
-    /// Deep background — NOT pure black
-    static let charcoal = Color(red: 0.10, green: 0.10, blue: 0.18)       // #1A1A2E
-    /// Card / panel surface
-    static let surface = Color(red: 0.145, green: 0.145, blue: 0.25)      // #252540
-    /// Elevated / hover surface
-    static let surfaceBright = Color(red: 0.185, green: 0.185, blue: 0.31) // #2F2F50
-    /// Muted text
-    static let textSecondary = Color.white.opacity(0.55)
-    /// Subtle borders
-    static let border = Color.white.opacity(0.08)
+    /// Page background — pale ice-blue
+    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)    // #EBF4FA
+    /// Card surface — pure white
+    static let card = Color.white
+    /// Primary text — near-black
+    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)   // #1A1A1A
+    /// Secondary text — medium gray
+    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58) // #8E8E93
+    /// CTA / primary button — black
+    static let ctaBlack = Color(red: 0.10, green: 0.10, blue: 0.10)      // #1A1A1A
     
-    // MARK: - Semantic Colors
+    // MARK: - Pastel Accent Cards
     
-    /// Active lockdown state
-    static let lockActive = peach
-    /// Inactive / safe state
-    static let lockInactive = mint
-    /// Premium feature highlight
-    static let premium = lavender
-    /// Destructive / emergency
-    static let danger = Color(red: 1.0, green: 0.55, blue: 0.55)
+    /// Soft lavender — lock, primary accent
+    static let lavenderCard = Color(red: 0.91, green: 0.88, blue: 0.97)  // #E8E0F8
+    static let lavenderText = Color(red: 0.45, green: 0.35, blue: 0.70)  // #735AB3
     
-    // MARK: - Fonts
+    /// Soft mint — success, streaks, safe
+    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)      // #D4F5E9
+    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)      // #2E8C60
+    
+    /// Soft peach — danger, warnings, locked
+    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)     // #FFE0DC
+    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)     // #B34D40
+    
+    /// Soft cream — highlights, info
+    static let creamCard = Color(red: 1.00, green: 0.97, blue: 0.91)     // #FFF8E7
+    static let creamText = Color(red: 0.60, green: 0.50, blue: 0.25)     // #998040
+    
+    /// Soft blue — secondary info
+    static let blueCard = Color(red: 0.85, green: 0.92, blue: 0.98)      // #D9EBFA
+    static let blueText = Color(red: 0.20, green: 0.45, blue: 0.70)      // #3373B3
+    
+    // MARK: - Fonts (Rounded)
     
     static func title(_ size: CGFloat = 28) -> Font {
         .system(size: size, weight: .bold, design: .rounded)
@@ -59,7 +59,7 @@ enum SoberTheme {
     }
 }
 
-// MARK: - Card Modifier
+// MARK: - White Card Modifier (with shadow)
 
 struct SoberCardModifier: ViewModifier {
     var padding: CGFloat = 16
@@ -68,14 +68,8 @@ struct SoberCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(SoberTheme.surface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(SoberTheme.border, lineWidth: 1)
-                    )
-            )
+            .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -85,62 +79,85 @@ extension View {
     }
 }
 
-// MARK: - Primary Button Style
+// MARK: - Black CTA Button Style
 
 struct SoberPrimaryButtonStyle: ButtonStyle {
-    var color: Color = SoberTheme.lavender
+    var color: Color = SoberTheme.ctaBlack
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SoberTheme.headline())
-            .foregroundColor(SoberTheme.charcoal)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(color, in: RoundedRectangle(cornerRadius: 16))
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
 struct SoberSecondaryButtonStyle: ButtonStyle {
-    var color: Color = SoberTheme.lavender
+    var color: Color = SoberTheme.ctaBlack
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SoberTheme.headline())
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(color.opacity(0.4), lineWidth: 1.5)
-                    .fill(color.opacity(0.08))
+                    .stroke(color.opacity(0.3), lineWidth: 1.5)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
-// MARK: - Pill Badge
+// MARK: - Pastel Pill Badge
 
 struct SoberPill: View {
     let text: String
-    var color: Color = SoberTheme.lavender
+    var bgColor: Color = SoberTheme.lavenderCard
+    var fgColor: Color = SoberTheme.lavenderText
     var small: Bool = false
     
     var body: some View {
         Text(text)
             .font(small ? SoberTheme.caption(10) : SoberTheme.caption())
             .fontWeight(.bold)
-            .foregroundColor(color)
+            .foregroundStyle(fgColor)
             .padding(.horizontal, small ? 8 : 10)
             .padding(.vertical, small ? 3 : 5)
-            .background(color.opacity(0.15), in: Capsule())
+            .background(bgColor, in: Capsule())
     }
 }
 
-// MARK: - Animated Lock Icon
+// MARK: - Section Header
+
+struct SoberSectionHeader: View {
+    let title: String
+    var icon: String? = nil
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(SoberTheme.textSecondary)
+            }
+            Text(title)
+                .font(SoberTheme.caption())
+                .foregroundStyle(SoberTheme.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.8)
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
+// MARK: - Animated Lock Icon (Light version)
 
 struct AnimatedLockIcon: View {
     let isActive: Bool
@@ -148,18 +165,15 @@ struct AnimatedLockIcon: View {
     
     var body: some View {
         ZStack {
-            // Glow ring
-            if isActive {
-                Circle()
-                    .fill(SoberTheme.peach.opacity(glowAmount * 0.4))
-                    .frame(width: 80, height: 80)
-                    .blur(radius: 15)
-            }
+            // Soft pastel circle
+            Circle()
+                .fill(isActive ? SoberTheme.peachCard : SoberTheme.mintCard)
+                .frame(width: 80, height: 80)
+                .scaleEffect(isActive ? (0.95 + glowAmount * 0.1) : 1.0)
             
-            // Icon
             Image(systemName: isActive ? "lock.fill" : "lock.open.fill")
-                .font(.system(size: 36, weight: .semibold))
-                .foregroundStyle(isActive ? SoberTheme.peach : SoberTheme.mint)
+                .font(.system(size: 32, weight: .semibold))
+                .foregroundStyle(isActive ? SoberTheme.peachText : SoberTheme.mintText)
                 .symbolEffect(.bounce, value: isActive)
         }
         .onAppear {
@@ -181,71 +195,11 @@ struct AnimatedLockIcon: View {
     }
 }
 
-// MARK: - Section Header
-
-struct SoberSectionHeader: View {
-    let title: String
-    var icon: String? = nil
-    var color: Color = SoberTheme.textSecondary
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(color)
-            }
-            Text(title)
-                .font(SoberTheme.caption())
-                .foregroundColor(color)
-                .textCase(.uppercase)
-                .tracking(0.8)
-        }
-        .padding(.horizontal, 4)
-    }
-}
-
-// MARK: - Floating Orbs Background
-
-struct FloatingOrbsBackground: View {
-    @State private var phase: CGFloat = 0
-    
-    var body: some View {
-        ZStack {
-            SoberTheme.charcoal.ignoresSafeArea()
-            
-            // Subtle floating pastel orbs
-            Circle()
-                .fill(SoberTheme.lavender.opacity(0.06))
-                .frame(width: 200, height: 200)
-                .blur(radius: 60)
-                .offset(x: -80, y: -200 + sin(phase) * 20)
-            
-            Circle()
-                .fill(SoberTheme.mint.opacity(0.05))
-                .frame(width: 160, height: 160)
-                .blur(radius: 50)
-                .offset(x: 100, y: 100 + cos(phase) * 15)
-            
-            Circle()
-                .fill(SoberTheme.peach.opacity(0.04))
-                .frame(width: 180, height: 180)
-                .blur(radius: 55)
-                .offset(x: -60, y: 300 + sin(phase * 0.7) * 25)
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
-                phase = .pi * 2
-            }
-        }
-    }
-}
-
-// MARK: - Custom Tab Bar
+// MARK: - Custom Tab Bar (Light)
 
 struct SoberTabBar: View {
     @Binding var selectedTab: Int
-    @Namespace private var tabNamespace
+    @Namespace private var tabNS
     
     private let tabs: [(icon: String, label: String)] = [
         ("lock.shield.fill", "Lockdown"),
@@ -255,38 +209,45 @@ struct SoberTabBar: View {
     ]
     
     private let tabColors: [Color] = [
-        SoberTheme.peach,
-        SoberTheme.cream,
-        SoberTheme.mint,
-        SoberTheme.skyBlue
+        SoberTheme.lavenderCard,
+        SoberTheme.creamCard,
+        SoberTheme.mintCard,
+        SoberTheme.blueCard
+    ]
+    
+    private let tabIconColors: [Color] = [
+        SoberTheme.lavenderText,
+        SoberTheme.creamText,
+        SoberTheme.mintText,
+        SoberTheme.blueText
     ]
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(0..<tabs.count, id: \.self) { index in
-                Button(action: {
+                Button {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                         selectedTab = index
                     }
-                }) {
+                } label: {
                     VStack(spacing: 4) {
                         ZStack {
                             if selectedTab == index {
                                 Capsule()
-                                    .fill(tabColors[index].opacity(0.18))
+                                    .fill(tabColors[index])
                                     .frame(width: 56, height: 32)
-                                    .matchedGeometryEffect(id: "tabPill", in: tabNamespace)
+                                    .matchedGeometryEffect(id: "tabPill", in: tabNS)
                             }
                             
                             Image(systemName: tabs[index].icon)
                                 .font(.system(size: 18, weight: selectedTab == index ? .semibold : .regular))
-                                .foregroundColor(selectedTab == index ? tabColors[index] : SoberTheme.textSecondary)
+                                .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary)
                         }
                         .frame(height: 32)
                         
                         Text(tabs[index].label)
                             .font(SoberTheme.caption(10))
-                            .foregroundColor(selectedTab == index ? tabColors[index] : SoberTheme.textSecondary)
+                            .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -294,42 +255,30 @@ struct SoberTabBar: View {
             }
         }
         .padding(.vertical, 8)
-        .padding(.bottom, 4) // Safe area will add more
+        .padding(.bottom, 4)
         .background(
-            SoberTheme.surface
-                .overlay(
-                    Rectangle()
-                        .fill(SoberTheme.border)
-                        .frame(height: 0.5),
-                    alignment: .top
-                )
+            SoberTheme.card
+                .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
         )
     }
 }
 
-// MARK: - Pastel Toggle Style
+// MARK: - Pastel Accent Card
 
-struct SoberToggleStyle: ToggleStyle {
-    var onColor: Color = SoberTheme.lavender
+struct PastelAccentCard<Content: View>: View {
+    let bgColor: Color
+    let cornerRadius: CGFloat
+    let content: Content
     
-    func makeBody(configuration: Configuration) -> some View {
-        HStack {
-            configuration.label
-            Spacer()
-            Capsule()
-                .fill(configuration.isOn ? onColor.opacity(0.3) : SoberTheme.border)
-                .frame(width: 50, height: 30)
-                .overlay(
-                    Circle()
-                        .fill(configuration.isOn ? onColor : Color.white.opacity(0.5))
-                        .frame(width: 26, height: 26)
-                        .offset(x: configuration.isOn ? 10 : -10),
-                    alignment: .center
-                )
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isOn)
-                .onTapGesture {
-                    configuration.isOn.toggle()
-                }
-        }
+    init(bgColor: Color, cornerRadius: CGFloat = 20, @ViewBuilder content: () -> Content) {
+        self.bgColor = bgColor
+        self.cornerRadius = cornerRadius
+        self.content = content()
+    }
+    
+    var body: some View {
+        content
+            .padding(16)
+            .background(bgColor, in: RoundedRectangle(cornerRadius: cornerRadius))
     }
 }

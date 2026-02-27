@@ -2,7 +2,6 @@ import SwiftUI
 import UserNotifications
 
 struct SettingsView: View {
-    // Environment Managers
     @Environment(StoreManager.self) private var storeManager
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(LockdownManager.self) private var lockdownManager
@@ -15,36 +14,23 @@ struct SettingsView: View {
     @AppStorage("morningReportEnabled", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var morningReportEnabled: Bool = true
     
     let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
-    
-    // Minimum gap in minutes between start and end
     private let minimumGapMinutes = 60
     
     var body: some View {
-        ZStack {
-            SoberTheme.charcoal.ignoresSafeArea()
-            
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 20) {
-                    // Premium Status
-                    premiumSection
-                    
-                    // Schedule
-                    scheduleSection
-                    
-                    // Notifications
-                    notificationsSection
-                    
-                    // About
-                    aboutSection
-                    
-                    Spacer(minLength: 100)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 20) {
+                premiumSection
+                scheduleSection
+                notificationsSection
+                aboutSection
+                Spacer(minLength: 100)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
         }
+        .background(SoberTheme.background.ignoresSafeArea())
         .navigationTitle("Settings")
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
         .onAppear {
             startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
             endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
@@ -55,79 +41,62 @@ struct SettingsView: View {
         .sheet(isPresented: $showPaywall) { PaywallView() }
     }
     
-    // MARK: - Premium Section
+    // MARK: - Premium
     
     private var premiumSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Premium Status", icon: "crown.fill", color: SoberTheme.lavender)
+            SoberSectionHeader(title: "Premium Status", icon: "crown.fill")
             
             VStack(spacing: 0) {
                 if storeManager.isPremium {
                     HStack(spacing: 12) {
                         ZStack {
-                            Circle()
-                                .fill(SoberTheme.mint.opacity(0.15))
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(SoberTheme.mint)
+                            Circle().fill(SoberTheme.mintCard).frame(width: 40, height: 40)
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(SoberTheme.mintText)
                         }
                         Text("SoberSend Premium")
-                            .font(SoberTheme.headline())
-                            .foregroundColor(.white)
+                            .font(SoberTheme.headline()).foregroundStyle(SoberTheme.textPrimary)
                         Spacer()
-                        SoberPill(text: "ACTIVE", color: SoberTheme.mint, small: true)
+                        SoberPill(text: "ACTIVE", bgColor: SoberTheme.mintCard, fgColor: SoberTheme.mintText, small: true)
                     }
                     .padding(.vertical, 4)
                 } else {
-                    Button(action: { showPaywall = true }) {
+                    Button { showPaywall = true } label: {
                         HStack(spacing: 12) {
                             ZStack {
-                                Circle()
-                                    .fill(SoberTheme.lavender.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                Image(systemName: "crown.fill")
-                                    .foregroundColor(SoberTheme.lavender)
+                                Circle().fill(SoberTheme.lavenderCard).frame(width: 40, height: 40)
+                                Image(systemName: "crown.fill").foregroundStyle(SoberTheme.lavenderText)
                             }
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Upgrade to Premium")
-                                    .font(SoberTheme.headline())
-                                    .foregroundColor(SoberTheme.lavender)
+                                    .font(SoberTheme.headline()).foregroundStyle(SoberTheme.lavenderText)
                                 Text("Unlock all features")
-                                    .font(SoberTheme.caption())
-                                    .foregroundColor(SoberTheme.textSecondary)
+                                    .font(SoberTheme.caption()).foregroundStyle(SoberTheme.textSecondary)
                             }
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(SoberTheme.lavender.opacity(0.5))
+                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(SoberTheme.textSecondary)
                         }
                     }
                     .buttonStyle(.plain)
                     .padding(.vertical, 4)
                 }
                 
-                Divider().background(SoberTheme.border)
+                Divider()
                 
-                Button(action: {
+                Button {
                     Task {
                         await storeManager.restorePurchases()
-                        restoreMessage = storeManager.isPremium
-                            ? "Premium restored successfully!"
-                            : "No active subscriptions found."
+                        restoreMessage = storeManager.isPremium ? "Premium restored successfully!" : "No active subscriptions found."
                         showRestoreAlert = true
                     }
-                }) {
+                } label: {
                     HStack(spacing: 12) {
                         ZStack {
-                            Circle()
-                                .fill(SoberTheme.skyBlue.opacity(0.15))
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundColor(SoberTheme.skyBlue)
+                            Circle().fill(SoberTheme.blueCard).frame(width: 40, height: 40)
+                            Image(systemName: "arrow.clockwise").foregroundStyle(SoberTheme.blueText)
                         }
                         Text("Restore Purchases")
-                            .font(SoberTheme.body())
-                            .foregroundColor(.white)
+                            .font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
                         Spacer()
                     }
                 }
@@ -138,37 +107,29 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Schedule Section
+    // MARK: - Schedule
     
     private var scheduleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Lockdown Schedule", icon: "calendar.badge.clock", color: SoberTheme.peach)
+            SoberSectionHeader(title: "Lockdown Schedule", icon: "calendar.badge.clock")
             
             VStack(spacing: 14) {
-                // Day pills
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Active nights")
-                        .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.textSecondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
+                        .font(SoberTheme.caption()).foregroundStyle(SoberTheme.textSecondary)
+                        .textCase(.uppercase).tracking(0.5)
                     
                     HStack(spacing: 6) {
                         ForEach(0..<7, id: \.self) { i in
                             let weekday = i + 1
                             let isActive = lockdownManager.isDayActive(weekday)
                             let isWeekend = weekday == 1 || weekday == 7
-                            Button(action: { lockdownManager.toggleDay(weekday) }) {
+                            Button { lockdownManager.toggleDay(weekday) } label: {
                                 Text(dayLabels[i])
-                                    .font(SoberTheme.caption(13))
-                                    .fontWeight(.bold)
+                                    .font(SoberTheme.caption(13)).fontWeight(.bold)
                                     .frame(width: 34, height: 34)
-                                    .background(
-                                        isActive
-                                        ? (isWeekend ? SoberTheme.peach : SoberTheme.lavender)
-                                        : SoberTheme.surfaceBright
-                                    )
-                                    .foregroundColor(isActive ? SoberTheme.charcoal : SoberTheme.textSecondary)
+                                    .background(isActive ? (isWeekend ? SoberTheme.peachCard : SoberTheme.lavenderCard) : Color.gray.opacity(0.12))
+                                    .foregroundStyle(isActive ? (isWeekend ? SoberTheme.peachText : SoberTheme.lavenderText) : SoberTheme.textSecondary)
                                     .clipShape(Circle())
                             }
                             .buttonStyle(.plain)
@@ -176,20 +137,15 @@ struct SettingsView: View {
                     }
                     
                     HStack(spacing: 16) {
-                        Button("Weekends") { setWeekends() }
-                            .font(SoberTheme.caption())
-                            .foregroundColor(SoberTheme.peach)
-                        Button("Every Night") { lockdownManager.setAllDays(active: true) }
-                            .font(SoberTheme.caption())
-                            .foregroundColor(SoberTheme.lavender)
+                        Button("Weekends") { setWeekends() }.font(SoberTheme.caption()).foregroundStyle(SoberTheme.peachText)
+                        Button("Every Night") { lockdownManager.setAllDays(active: true) }.font(SoberTheme.caption()).foregroundStyle(SoberTheme.lavenderText)
                     }
                 }
                 
-                Divider().background(SoberTheme.border)
+                Divider()
                 
-                // Time pickers
                 HStack {
-                    Image(systemName: "moon.fill").foregroundColor(SoberTheme.lavender)
+                    Image(systemName: "moon.fill").foregroundStyle(SoberTheme.lavenderText)
                     DatePicker("Starts", selection: $startTime, displayedComponents: .hourAndMinute)
                         .onChange(of: startTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -198,9 +154,8 @@ struct SettingsView: View {
                             enforceMinimumGap(changedStart: true)
                         }
                 }
-                
                 HStack {
-                    Image(systemName: "sunrise.fill").foregroundColor(SoberTheme.peach)
+                    Image(systemName: "sunrise.fill").foregroundStyle(SoberTheme.peachText)
                     DatePicker("Ends", selection: $endTime, displayedComponents: .hourAndMinute)
                         .onChange(of: endTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -212,115 +167,77 @@ struct SettingsView: View {
             }
             .soberCard()
             
-            Text("The lockdown window must be at least 1 hour. If start and end are too close, the end time will be adjusted automatically.")
-                .font(SoberTheme.caption(11))
-                .foregroundColor(SoberTheme.textSecondary)
-                .padding(.horizontal, 4)
+            Text("The lockdown window must be at least 1 hour.")
+                .font(SoberTheme.caption(11)).foregroundStyle(SoberTheme.textSecondary).padding(.horizontal, 4)
         }
     }
     
-    // MARK: - Notifications Section
+    // MARK: - Notifications
     
     private var notificationsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Notifications", icon: "bell.fill", color: SoberTheme.cream)
+            SoberSectionHeader(title: "Notifications", icon: "bell.fill")
             
             VStack(spacing: 0) {
                 if notificationManager.isAuthorized {
                     HStack {
                         HStack(spacing: 10) {
                             ZStack {
-                                Circle()
-                                    .fill(SoberTheme.cream.opacity(0.15))
-                                    .frame(width: 36, height: 36)
-                                Image(systemName: "sunrise.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(SoberTheme.cream)
+                                Circle().fill(SoberTheme.creamCard).frame(width: 36, height: 36)
+                                Image(systemName: "sunrise.fill").font(.system(size: 14)).foregroundStyle(SoberTheme.creamText)
                             }
-                            Text("Morning Report")
-                                .font(SoberTheme.body())
-                                .foregroundColor(.white)
+                            Text("Morning Report").font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
                         }
                         Spacer()
                         Toggle("", isOn: $morningReportEnabled)
-                            .toggleStyle(SoberToggleStyle(onColor: SoberTheme.cream))
                             .labelsHidden()
                             .onChange(of: morningReportEnabled) { _, enabled in
-                                if enabled {
-                                    notificationManager.scheduleMorningReport(at: 8, minute: 0)
-                                } else {
-                                    notificationManager.cancelMorningReport()
-                                }
+                                if enabled { notificationManager.scheduleMorningReport(at: 8, minute: 0) }
+                                else { notificationManager.cancelMorningReport() }
                             }
                     }
                 } else {
                     HStack(spacing: 10) {
                         ZStack {
-                            Circle()
-                                .fill(SoberTheme.peach.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "bell.slash.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(SoberTheme.peach)
+                            Circle().fill(SoberTheme.peachCard).frame(width: 36, height: 36)
+                            Image(systemName: "bell.slash.fill").font(.system(size: 14)).foregroundStyle(SoberTheme.peachText)
                         }
-                        Text("Notifications")
-                            .font(SoberTheme.body())
-                            .foregroundColor(.white)
+                        Text("Notifications").font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
                         Spacer()
-                        Button("Enable in Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                        .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.lavender)
+                        Button("Enable") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                        }.font(SoberTheme.caption()).foregroundStyle(SoberTheme.lavenderText)
                     }
                 }
             }
             .soberCard()
             
-            Text("The morning report reminds you every day at 8 AM to review last night's activity.")
-                .font(SoberTheme.caption(11))
-                .foregroundColor(SoberTheme.textSecondary)
-                .padding(.horizontal, 4)
+            Text("Daily 8 AM report of last night's activity.")
+                .font(SoberTheme.caption(11)).foregroundStyle(SoberTheme.textSecondary).padding(.horizontal, 4)
         }
     }
     
-    // MARK: - About Section
+    // MARK: - About
     
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "About", icon: "info.circle.fill", color: SoberTheme.skyBlue)
+            SoberSectionHeader(title: "About", icon: "info.circle.fill")
             
             VStack(spacing: 0) {
-                settingsRow(icon: "lock.doc.fill", iconColor: SoberTheme.lavender, title: "Privacy Policy") {
-                    if let url = URL(string: "https://musamasalla.github.io/SoberSend/privacy.html") {
-                        UIApplication.shared.open(url)
-                    }
+                settingsRow(icon: "lock.doc.fill", iconBg: SoberTheme.lavenderCard, iconFg: SoberTheme.lavenderText, title: "Privacy Policy") {
+                    if let url = URL(string: "https://musamasalla.github.io/SoberSend/privacy.html") { UIApplication.shared.open(url) }
                 }
-                
-                Divider().background(SoberTheme.border).padding(.leading, 52)
-                
-                settingsRow(icon: "doc.text.fill", iconColor: SoberTheme.skyBlue, title: "Terms of Service") {
-                    if let url = URL(string: "https://musamasalla.github.io/SoberSend/terms.html") {
-                        UIApplication.shared.open(url)
-                    }
+                Divider().padding(.leading, 52)
+                settingsRow(icon: "doc.text.fill", iconBg: SoberTheme.blueCard, iconFg: SoberTheme.blueText, title: "Terms of Service") {
+                    if let url = URL(string: "https://musamasalla.github.io/SoberSend/terms.html") { UIApplication.shared.open(url) }
                 }
-                
-                Divider().background(SoberTheme.border).padding(.leading, 52)
-                
+                Divider().padding(.leading, 52)
                 HStack(spacing: 10) {
                     ZStack {
-                        Circle()
-                            .fill(SoberTheme.surfaceBright)
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "number")
-                            .font(.system(size: 14))
-                            .foregroundColor(SoberTheme.textSecondary)
+                        Circle().fill(Color.gray.opacity(0.12)).frame(width: 36, height: 36)
+                        Image(systemName: "number").font(.system(size: 14)).foregroundStyle(SoberTheme.textSecondary)
                     }
-                    Text("Version 1.0.0")
-                        .font(SoberTheme.body())
-                        .foregroundColor(SoberTheme.textSecondary)
+                    Text("Version 1.0.0").font(SoberTheme.body()).foregroundStyle(SoberTheme.textSecondary)
                     Spacer()
                 }
                 .padding(.vertical, 10)
@@ -329,27 +246,17 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Settings Row
-    
     @ViewBuilder
-    private func settingsRow(icon: String, iconColor: Color, title: String, action: @escaping () -> Void) -> some View {
+    private func settingsRow(icon: String, iconBg: Color, iconFg: Color, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle()
-                        .fill(iconColor.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: icon)
-                        .font(.system(size: 14))
-                        .foregroundColor(iconColor)
+                    Circle().fill(iconBg).frame(width: 36, height: 36)
+                    Image(systemName: icon).font(.system(size: 14)).foregroundStyle(iconFg)
                 }
-                Text(title)
-                    .font(SoberTheme.body())
-                    .foregroundColor(.white)
+                Text(title).font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
                 Spacer()
-                Image(systemName: "arrow.up.right")
-                    .font(.caption)
-                    .foregroundColor(SoberTheme.textSecondary)
+                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(SoberTheme.textSecondary)
             }
             .padding(.vertical, 10)
         }
@@ -360,32 +267,23 @@ struct SettingsView: View {
     
     private func setWeekends() {
         lockdownManager.setAllDays(active: false)
-        lockdownManager.toggleDay(1) // Sunday
-        lockdownManager.toggleDay(7) // Saturday
+        lockdownManager.toggleDay(1)
+        lockdownManager.toggleDay(7)
     }
     
     private func enforceMinimumGap(changedStart: Bool) {
         let startMinutes = lockdownManager.lockStartHour * 60 + lockdownManager.lockStartMinute
         let endMinutes = lockdownManager.lockEndHour * 60 + lockdownManager.lockEndMinute
-        
-        let gap: Int
-        if endMinutes > startMinutes {
-            gap = endMinutes - startMinutes
-        } else {
-            gap = (24 * 60 - startMinutes) + endMinutes
-        }
-        
+        let gap = endMinutes > startMinutes ? endMinutes - startMinutes : (24 * 60 - startMinutes) + endMinutes
         if gap < minimumGapMinutes {
             if changedStart {
                 let newEnd = (startMinutes + minimumGapMinutes) % (24 * 60)
-                lockdownManager.lockEndHour = newEnd / 60
-                lockdownManager.lockEndMinute = newEnd % 60
+                lockdownManager.lockEndHour = newEnd / 60; lockdownManager.lockEndMinute = newEnd % 60
                 endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
             } else {
                 var newStart = endMinutes - minimumGapMinutes
                 if newStart < 0 { newStart += 24 * 60 }
-                lockdownManager.lockStartHour = newStart / 60
-                lockdownManager.lockStartMinute = newStart % 60
+                lockdownManager.lockStartHour = newStart / 60; lockdownManager.lockStartMinute = newStart % 60
                 startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
             }
         }

@@ -10,24 +10,20 @@ struct HomeView: View {
     @State private var showIntentions = false
     @State private var showPaywallForApps = false
     
-    // Free tier limit
     private let freeAppLimit = 1
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Background
-            SoberTheme.charcoal.ignoresSafeArea()
+            SoberTheme.background.ignoresSafeArea()
             
-            // Content
             TabView(selection: $activeTab) {
                 NavigationStack {
                     SetupView(showAppPicker: $isPresented)
-                        .navigationTitle(lockdownManager.isAppBlockingActive() ? "Lockdown Active" : "SoberSend")
                         .toolbar {
                             ToolbarItem(placement: .topBarTrailing) {
-                                Button(action: { showIntentions = true }) {
+                                Button { showIntentions = true } label: {
                                     Image(systemName: "pencil.and.outline")
-                                        .foregroundColor(SoberTheme.lavender)
+                                        .foregroundStyle(SoberTheme.lavenderText)
                                 }
                             }
                         }
@@ -51,12 +47,10 @@ struct HomeView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             
-            // Custom tab bar
             SoberTabBar(selectedTab: $activeTab)
         }
         .familyActivityPicker(isPresented: $isPresented, selection: Bindable(lockdownManager).selectionToDiscourage)
         .onChange(of: isPresented) { _, presented in
-            // Enforce free tier limit after picker closes
             if !presented && !storeManager.isPremium {
                 let appCount = lockdownManager.selectionToDiscourage.applicationTokens.count
                 if appCount > freeAppLimit {
@@ -72,6 +66,6 @@ struct HomeView: View {
         .sheet(isPresented: $showPaywallForApps) {
             PaywallView()
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }

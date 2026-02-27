@@ -14,39 +14,24 @@ struct SetupView: View {
     @State private var challengingContact: LockedContact? = nil
     @State private var showPaywall = false
 
-    // Free tier limits
     private let freeContactLimit = 1
     private let freeAppLimit = 1
     private let freeDifficulties: [ChallengeDifficulty] = [.easy, .medium]
 
     var body: some View {
-        ZStack {
-            FloatingOrbsBackground()
-            
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 20) {
-                    // MARK: - Hero Status Card
-                    heroStatusCard
-                    
-                    // MARK: - Lock Targets
-                    lockTargetsSection
-                    
-                    // MARK: - Locked Contacts
-                    if !lockedContacts.isEmpty {
-                        lockedContactsSection
-                    }
-                    
-                    // MARK: - Premium Upsell
-                    if !storeManager.isPremium {
-                        premiumBanner
-                    }
-                    
-                    Spacer(minLength: 100) // Tab bar clearance
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 20) {
+                heroStatusCard
+                lockTargetsSection
+                if !lockedContacts.isEmpty { lockedContactsSection }
+                if !storeManager.isPremium { premiumBanner }
+                Spacer(minLength: 100)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
         }
+        .background(SoberTheme.background.ignoresSafeArea())
+        .navigationTitle("SoberSend")
         .fullScreenCover(item: $challengingContact) { contact in
             ChallengeCoordinatorView(
                 contactOrAppName: contact.displayName,
@@ -60,144 +45,130 @@ struct SetupView: View {
                 challengingContact = nil
             }
         }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
-        }
-        .sheet(isPresented: $isShowingContactPicker) {
-            ContactPickerView().ignoresSafeArea()
-        }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
+        .sheet(isPresented: $isShowingContactPicker) { ContactPickerView().ignoresSafeArea() }
     }
     
     // MARK: - Hero Status Card
     
     private var heroStatusCard: some View {
-        VStack(spacing: 16) {
-            AnimatedLockIcon(isActive: lockdownManager.isAppBlockingActive())
-            
-            Text(lockdownManager.isAppBlockingActive() ? "Lockdown Active" : "You're Unprotected")
-                .font(SoberTheme.headline(20))
-                .foregroundColor(lockdownManager.isAppBlockingActive() ? SoberTheme.peach : SoberTheme.mint)
-            
-            if lockdownManager.isCurrentlyInLockedWindow() {
-                SoberPill(text: "SCHEDULED WINDOW", color: SoberTheme.peach, small: true)
-            } else if lockdownManager.isManuallyActivated {
-                SoberPill(text: "MANUAL LOCK", color: SoberTheme.lavender, small: true)
-            } else {
-                SoberPill(text: "INACTIVE", color: SoberTheme.mint, small: true)
+        PastelAccentCard(bgColor: lockdownManager.isAppBlockingActive() ? SoberTheme.peachCard : SoberTheme.mintCard) {
+            VStack(spacing: 14) {
+                AnimatedLockIcon(isActive: lockdownManager.isAppBlockingActive())
+                
+                Text(lockdownManager.isAppBlockingActive() ? "Lockdown Active" : "You're Unprotected")
+                    .font(SoberTheme.headline(20))
+                    .foregroundStyle(lockdownManager.isAppBlockingActive() ? SoberTheme.peachText : SoberTheme.mintText)
+                
+                if lockdownManager.isCurrentlyInLockedWindow() {
+                    SoberPill(text: "SCHEDULED WINDOW", bgColor: SoberTheme.peachCard, fgColor: SoberTheme.peachText, small: true)
+                } else if lockdownManager.isManuallyActivated {
+                    SoberPill(text: "MANUAL LOCK", bgColor: SoberTheme.lavenderCard, fgColor: SoberTheme.lavenderText, small: true)
+                } else {
+                    SoberPill(text: "INACTIVE", bgColor: SoberTheme.mintCard, fgColor: SoberTheme.mintText, small: true)
+                }
+                
+                HStack {
+                    Image(systemName: "bolt.fill")
+                        .foregroundStyle(SoberTheme.lavenderText)
+                    Text("Activate Now")
+                        .font(SoberTheme.body())
+                        .foregroundStyle(SoberTheme.textPrimary)
+                    Spacer()
+                    Toggle("", isOn: Bindable(lockdownManager).isManuallyActivated)
+                        .labelsHidden()
+                }
+                .padding(.top, 4)
             }
-            
-            // Activate toggle
-            HStack {
-                Image(systemName: "bolt.fill")
-                    .foregroundColor(SoberTheme.lavender)
-                Text("Activate Now")
-                    .font(SoberTheme.body())
-                    .foregroundColor(.white)
-                Spacer()
-                Toggle("", isOn: Bindable(lockdownManager).isManuallyActivated)
-                    .toggleStyle(SoberToggleStyle(onColor: SoberTheme.peach))
-                    .labelsHidden()
-            }
-            .padding(.top, 4)
         }
-        .soberCard(padding: 24, cornerRadius: 24)
     }
     
-    // MARK: - Lock Targets Section
+    // MARK: - Lock Targets
     
     private var lockTargetsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Lock Targets", icon: "target", color: SoberTheme.lavender)
+            SoberSectionHeader(title: "Lock Targets", icon: "target")
             
             // Apps card
-            Button(action: { showAppPicker = true }) {
+            Button { showAppPicker = true } label: {
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(SoberTheme.lavender.opacity(0.15))
+                            .fill(SoberTheme.lavenderCard)
                             .frame(width: 44, height: 44)
                         Image(systemName: "apps.iphone")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(SoberTheme.lavender)
+                            .foregroundStyle(SoberTheme.lavenderText)
                     }
-                    
                     VStack(alignment: .leading, spacing: 2) {
                         Text(lockdownManager.selectionToDiscourage.applicationTokens.isEmpty
                              ? "Select Apps to Lock"
                              : "\(lockdownManager.selectionToDiscourage.applicationTokens.count) App\(lockdownManager.selectionToDiscourage.applicationTokens.count == 1 ? "" : "s") Locked")
                             .font(SoberTheme.headline())
-                            .foregroundColor(.white)
-                        
+                            .foregroundStyle(SoberTheme.textPrimary)
                         if !storeManager.isPremium {
                             Text("Free: \(freeAppLimit) max")
                                 .font(SoberTheme.caption())
-                                .foregroundColor(SoberTheme.peach)
+                                .foregroundStyle(SoberTheme.peachText)
                         }
                     }
-                    
                     Spacer()
-                    
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
                 .soberCard()
             }
             .buttonStyle(.plain)
             
             // Contacts card
-            Button(action: {
+            Button {
                 if !storeManager.isPremium && lockedContacts.count >= freeContactLimit {
                     showPaywall = true
                 } else {
                     isShowingContactPicker = true
                 }
-            }) {
+            } label: {
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(SoberTheme.skyBlue.opacity(0.15))
+                            .fill(SoberTheme.blueCard)
                             .frame(width: 44, height: 44)
                         Image(systemName: "person.crop.circle.badge.plus")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(SoberTheme.skyBlue)
+                            .foregroundStyle(SoberTheme.blueText)
                     }
-                    
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Add Contact to Lock")
                             .font(SoberTheme.headline())
-                            .foregroundColor(.white)
-                        
+                            .foregroundStyle(SoberTheme.textPrimary)
                         if !storeManager.isPremium {
                             Text("Free: \(freeContactLimit) max")
                                 .font(SoberTheme.caption())
-                                .foregroundColor(SoberTheme.peach)
+                                .foregroundStyle(SoberTheme.peachText)
                         }
                     }
-                    
                     Spacer()
-                    
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
                 .soberCard()
             }
             .buttonStyle(.plain)
             
-            // Disclaimer
             Text("Note: Apple does not allow apps to block contacts directly in iMessage. Locked Contacts tracks who you shouldn't message and requires a challenge before removal.")
                 .font(SoberTheme.caption(11))
-                .foregroundColor(SoberTheme.textSecondary)
+                .foregroundStyle(SoberTheme.textSecondary)
                 .padding(.horizontal, 4)
         }
     }
     
-    // MARK: - Locked Contacts Section
+    // MARK: - Locked Contacts
     
     private var lockedContactsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Locked Contacts", icon: "person.2.fill", color: SoberTheme.skyBlue)
+            SoberSectionHeader(title: "Locked Contacts", icon: "person.2.fill")
             
             ForEach(lockedContacts) { contact in
                 contactRow(contact)
@@ -209,63 +180,51 @@ struct SetupView: View {
     private func contactRow(_ contact: LockedContact) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // Avatar circle
+                // Avatar
                 ZStack {
                     Circle()
-                        .fill(contact.isActive ? SoberTheme.peach.opacity(0.15) : SoberTheme.mint.opacity(0.15))
+                        .fill(contact.isActive ? SoberTheme.peachCard : SoberTheme.mintCard)
                         .frame(width: 40, height: 40)
                     Text(String(contact.displayName.prefix(1)))
                         .font(SoberTheme.headline())
-                        .foregroundColor(contact.isActive ? SoberTheme.peach : SoberTheme.mint)
+                        .foregroundStyle(contact.isActive ? SoberTheme.peachText : SoberTheme.mintText)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(contact.displayName)
                         .font(SoberTheme.headline())
-                        .foregroundColor(.white)
+                        .foregroundStyle(SoberTheme.textPrimary)
                     difficultyBadge(contact.difficulty)
                 }
                 
                 Spacer()
                 
-                // Difficulty picker
                 Menu {
                     ForEach(ChallengeDifficulty.allCases, id: \.self) { diff in
                         let isPremiumDiff = !freeDifficulties.contains(diff)
-                        Button(action: {
-                            if isPremiumDiff && !storeManager.isPremium {
-                                showPaywall = true
-                            } else {
-                                contact.difficulty = diff
-                                try? modelContext.save()
-                            }
-                        }) {
+                        Button {
+                            if isPremiumDiff && !storeManager.isPremium { showPaywall = true }
+                            else { contact.difficulty = diff; try? modelContext.save() }
+                        } label: {
                             HStack {
                                 Label(difficultyLabel(diff), systemImage: difficultyIcon(diff))
-                                if isPremiumDiff && !storeManager.isPremium {
-                                    Text("⭐️ Premium")
-                                }
+                                if isPremiumDiff && !storeManager.isPremium { Text("⭐️ Premium") }
                             }
                         }
                     }
                 } label: {
                     Image(systemName: "slider.horizontal.3")
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                         .frame(width: 32, height: 32)
                 }
                 
                 Toggle("", isOn: Binding(
                     get: { contact.isActive },
                     set: { newValue in
-                        if !newValue && lockdownManager.isAppBlockingActive() {
-                            challengingContact = contact
-                        } else {
-                            contact.isActive = newValue
-                            try? modelContext.save()
-                        }
+                        if !newValue && lockdownManager.isAppBlockingActive() { challengingContact = contact }
+                        else { contact.isActive = newValue; try? modelContext.save() }
                     }
                 ))
-                .toggleStyle(SoberToggleStyle(onColor: SoberTheme.peach))
                 .labelsHidden()
             }
             
@@ -273,10 +232,10 @@ struct SetupView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "quote.opening")
                         .font(.system(size: 10))
-                        .foregroundColor(SoberTheme.cream.opacity(0.5))
+                        .foregroundStyle(SoberTheme.textSecondary)
                     Text(note)
                         .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.cream.opacity(0.7))
+                        .foregroundStyle(SoberTheme.textSecondary)
                         .italic()
                     Spacer()
                 }
@@ -285,10 +244,7 @@ struct SetupView: View {
         }
         .soberCard()
         .contextMenu {
-            Button(role: .destructive) {
-                modelContext.delete(contact)
-                try? modelContext.save()
-            } label: {
+            Button(role: .destructive) { modelContext.delete(contact); try? modelContext.save() } label: {
                 Label("Delete", systemImage: "trash")
             }
         }
@@ -297,40 +253,29 @@ struct SetupView: View {
     // MARK: - Premium Banner
     
     private var premiumBanner: some View {
-        Button(action: { showPaywall = true }) {
+        Button { showPaywall = true } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(SoberTheme.lavender.opacity(0.15))
+                        .fill(SoberTheme.creamCard)
                         .frame(width: 44, height: 44)
-                    Text("⭐️")
-                        .font(.system(size: 20))
+                    Text("⭐️").font(.system(size: 20))
                 }
-                
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Unlock Premium")
                         .font(SoberTheme.headline())
-                        .foregroundColor(SoberTheme.lavender)
+                        .foregroundStyle(SoberTheme.textPrimary)
                     Text("Unlimited contacts, all difficulty levels, full stats")
                         .font(SoberTheme.caption())
-                        .foregroundColor(SoberTheme.textSecondary)
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
-                
                 Spacer()
-                
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(SoberTheme.lavender.opacity(0.6))
+                    .foregroundStyle(SoberTheme.textSecondary)
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(SoberTheme.lavender.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(SoberTheme.lavender.opacity(0.15), lineWidth: 1)
-                    )
-            )
+            .background(SoberTheme.creamCard, in: RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
     }
@@ -339,16 +284,18 @@ struct SetupView: View {
     
     @ViewBuilder
     private func difficultyBadge(_ diff: ChallengeDifficulty) -> some View {
-        SoberPill(text: difficultyLabel(diff), color: difficultyColor(diff), small: true)
+        SoberPill(text: difficultyLabel(diff), bgColor: diffBgColor(diff), fgColor: diffFgColor(diff), small: true)
     }
-    
     private func difficultyLabel(_ diff: ChallengeDifficulty) -> String {
         switch diff { case .easy: "Easy"; case .medium: "Medium"; case .hard: "Hard"; case .expert: "Expert 💀" }
     }
     private func difficultyIcon(_ diff: ChallengeDifficulty) -> String {
         switch diff { case .easy: "1.circle"; case .medium: "2.circle"; case .hard: "3.circle"; case .expert: "flame" }
     }
-    private func difficultyColor(_ diff: ChallengeDifficulty) -> Color {
-        switch diff { case .easy: SoberTheme.mint; case .medium: SoberTheme.skyBlue; case .hard: SoberTheme.peach; case .expert: SoberTheme.danger }
+    private func diffBgColor(_ diff: ChallengeDifficulty) -> Color {
+        switch diff { case .easy: SoberTheme.mintCard; case .medium: SoberTheme.blueCard; case .hard: SoberTheme.peachCard; case .expert: SoberTheme.peachCard }
+    }
+    private func diffFgColor(_ diff: ChallengeDifficulty) -> Color {
+        switch diff { case .easy: SoberTheme.mintText; case .medium: SoberTheme.blueText; case .hard: SoberTheme.peachText; case .expert: SoberTheme.peachText }
     }
 }
