@@ -6,6 +6,7 @@ struct StatsView: View {
     @Environment(StoreManager.self) private var storeManager
     
     @State private var showPaywall = false
+    @State private var animateHero = false
     
     var totalBlocks: Int { attempts.filter { !$0.passed }.count }
     var totalSaves: Int { attempts.filter { !$0.unlockGranted }.count }
@@ -30,95 +31,195 @@ struct StatsView: View {
     }
     
     var body: some View {
-        List {
-            // Hero stat
-            VStack(spacing: 16) {
-                Text("🛡️").font(.system(size: 50))
-                Text("\(totalBlocks)")
-                    .font(.system(size: 72, weight: .bold, design: .rounded))
-                    .foregroundColor(totalBlocks > 0 ? .green : .white)
-                Text("disasters averted")
-                    .font(.subheadline).foregroundColor(.gray)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 30)
-            .listRowBackground(Color.clear)
+        ZStack {
+            FloatingOrbsBackground()
             
-            // Streak
-            Section {
-                HStack {
-                    Text("🔥").font(.largeTitle)
-                    VStack(alignment: .leading) {
-                        Text("\(currentStreak) night\(currentStreak == 1 ? "" : "s")")
-                            .font(.title2).bold()
-                        Text("without a regrettable text")
-                            .font(.caption).foregroundColor(.gray)
-                    }
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 20) {
+                    // Hero stat
+                    heroCard
+                    
+                    // Streak
+                    streakCard
+                    
+                    // Achievements
+                    achievementsSection
+                    
+                    // Recent activity
+                    activitySection
+                    
+                    Spacer(minLength: 100)
                 }
-                .padding(.vertical, 4)
-            } header: { Text("Current Streak") }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+            }
+        }
+        .navigationTitle("Stats")
+        .preferredColorScheme(.dark)
+        .sheet(isPresented: $showPaywall) { PaywallView() }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
+                animateHero = true
+            }
+        }
+    }
+    
+    // MARK: - Hero Card
+    
+    private var heroCard: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "shield.checkered")
+                .font(.system(size: 44))
+                .foregroundStyle(SoberTheme.mint)
+                .scaleEffect(animateHero ? 1.0 : 0.5)
+                .opacity(animateHero ? 1.0 : 0.0)
             
-            // Achievements
-            Section("Achievements") {
+            Text("\(totalBlocks)")
+                .font(.system(size: 64, weight: .bold, design: .rounded))
+                .foregroundColor(totalBlocks > 0 ? SoberTheme.mint : .white)
+                .contentTransition(.numericText())
+            
+            Text("disasters averted")
+                .font(SoberTheme.body())
+                .foregroundColor(SoberTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
+        .soberCard(cornerRadius: 24)
+    }
+    
+    // MARK: - Streak Card
+    
+    private var streakCard: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(SoberTheme.peach.opacity(0.15))
+                    .frame(width: 56, height: 56)
+                Text("🔥")
+                    .font(.system(size: 28))
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(currentStreak) night\(currentStreak == 1 ? "" : "s")")
+                    .font(SoberTheme.headline(22))
+                    .foregroundColor(.white)
+                Text("without a regrettable text")
+                    .font(SoberTheme.caption())
+                    .foregroundColor(SoberTheme.textSecondary)
+            }
+            
+            Spacer()
+        }
+        .soberCard()
+    }
+    
+    // MARK: - Achievements
+    
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SoberSectionHeader(title: "Achievements", icon: "trophy.fill", color: SoberTheme.cream)
+            
+            VStack(spacing: 8) {
                 badgeRow(emoji: "🛡️", title: "First Save", desc: "Survived the first attempt", unlocked: totalBlocks >= 1)
                 badgeRow(emoji: "🔥", title: "7-Night Streak", desc: "A full week of clean sends", unlocked: currentStreak >= 7, premium: true)
                 badgeRow(emoji: "💪", title: "30-Night Streak", desc: "A whole month — legend", unlocked: currentStreak >= 30, premium: true)
                 badgeRow(emoji: "🎉", title: "Survived the Weekend", desc: "Made it through Fri & Sat", unlocked: hasSurvivedWeekend, premium: true)
                 badgeRow(emoji: "💔", title: "Ex-Free Zone", desc: "10 blocks without caving", unlocked: totalBlocks >= 10)
             }
+        }
+    }
+    
+    // MARK: - Activity
+    
+    private var activitySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                SoberSectionHeader(title: "Recent Activity", icon: "clock.fill", color: SoberTheme.skyBlue)
+                Spacer()
+                if !storeManager.isPremium {
+                    SoberPill(text: "FULL IN PREMIUM", color: SoberTheme.lavender, small: true)
+                }
+            }
             
-            // Recent Activity — PREMIUM: full history, FREE: last 3
-            Section {
-                let displayAttempts = storeManager.isPremium ? Array(attempts.prefix(20)) : Array(attempts.prefix(3))
-                
-                if displayAttempts.isEmpty {
-                    Text("No activity yet")
-                        .foregroundColor(.gray)
-                        .font(.subheadline)
-                } else {
-                    ForEach(displayAttempts) { attempt in
-                        HStack {
-                            Text(attempt.unlockGranted ? "😬" : "🛡️").font(.title2)
-                            VStack(alignment: .leading) {
-                                Text(attempt.contactOrApp).font(.subheadline).bold()
-                                Text(attempt.timestamp, style: .relative)
-                                    .font(.caption).foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Text(attempt.unlockGranted ? "Got through" : "Blocked")
-                                .font(.caption)
-                                .foregroundColor(attempt.unlockGranted ? .orange : .green)
-                        }
+            let displayAttempts = storeManager.isPremium ? Array(attempts.prefix(20)) : Array(attempts.prefix(3))
+            
+            if displayAttempts.isEmpty {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "moon.zzz.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(SoberTheme.textSecondary)
+                        Text("No activity yet")
+                            .font(SoberTheme.body())
+                            .foregroundColor(SoberTheme.textSecondary)
                     }
-                    
-                    // Prompt free users to upgrade for full history
-                    if !storeManager.isPremium && attempts.count > 3 {
-                        Button(action: { showPaywall = true }) {
-                            HStack {
-                                Image(systemName: "lock.fill").foregroundColor(.orange)
-                                Text("Upgrade to see full history (\(attempts.count) entries)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.orange)
+                    .padding(.vertical, 20)
+                    Spacer()
+                }
+                .soberCard()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(displayAttempts.enumerated()), id: \.element.id) { index, attempt in
+                        HStack(spacing: 12) {
+                            // Timeline dot
+                            ZStack {
+                                Circle()
+                                    .fill(attempt.unlockGranted ? SoberTheme.peach.opacity(0.2) : SoberTheme.mint.opacity(0.2))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: attempt.unlockGranted ? "exclamationmark.triangle.fill" : "shield.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(attempt.unlockGranted ? SoberTheme.peach : SoberTheme.mint)
                             }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(attempt.contactOrApp)
+                                    .font(SoberTheme.headline(14))
+                                    .foregroundColor(.white)
+                                Text(attempt.timestamp, style: .relative)
+                                    .font(SoberTheme.caption())
+                                    .foregroundColor(SoberTheme.textSecondary)
+                            }
+                            
+                            Spacer()
+                            
+                            SoberPill(
+                                text: attempt.unlockGranted ? "Got through" : "Blocked",
+                                color: attempt.unlockGranted ? SoberTheme.peach : SoberTheme.mint,
+                                small: true
+                            )
                         }
-                        .listRowBackground(Color.orange.opacity(0.08))
+                        .padding(.vertical, 10)
+                        
+                        if index < displayAttempts.count - 1 {
+                            Divider()
+                                .background(SoberTheme.border)
+                                .padding(.leading, 48)
+                        }
                     }
                 }
-            } header: {
-                HStack {
-                    Text("Recent Activity")
-                    Spacer()
-                    if !storeManager.isPremium {
-                        Text("⭐️ Full history in Premium")
-                            .font(.caption2).foregroundColor(.orange)
+                .soberCard()
+                
+                // Upgrade prompt
+                if !storeManager.isPremium && attempts.count > 3 {
+                    Button(action: { showPaywall = true }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill")
+                                .foregroundColor(SoberTheme.lavender)
+                            Text("Upgrade to see \(attempts.count) entries")
+                                .font(SoberTheme.caption())
+                                .foregroundColor(SoberTheme.lavender)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
                     }
                 }
             }
         }
-        .navigationTitle("Stats 📊")
-        .preferredColorScheme(.dark)
-        .sheet(isPresented: $showPaywall) { PaywallView() }
     }
+    
+    // MARK: - Helpers
     
     private var hasSurvivedWeekend: Bool {
         let calendar = Calendar.current
@@ -132,28 +233,38 @@ struct StatsView: View {
     
     @ViewBuilder
     private func badgeRow(emoji: String, title: String, desc: String, unlocked: Bool, premium: Bool = false) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             Text(emoji)
-                .font(.largeTitle)
+                .font(.system(size: 28))
                 .grayscale(unlocked ? 0 : 1)
                 .opacity(unlocked ? 1 : 0.4)
-            VStack(alignment: .leading) {
+                .frame(width: 36)
+            
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    Text(title).font(.headline)
+                    Text(title)
+                        .font(SoberTheme.headline(14))
+                        .foregroundColor(.white)
                     if premium && !storeManager.isPremium {
-                        Text("⭐️").font(.caption)
+                        SoberPill(text: "PRO", color: SoberTheme.lavender, small: true)
                     }
                 }
-                Text(desc).font(.caption).foregroundColor(.gray)
+                Text(desc)
+                    .font(SoberTheme.caption())
+                    .foregroundColor(SoberTheme.textSecondary)
             }
+            
             Spacer()
+            
             if premium && !storeManager.isPremium && !unlocked {
                 Button("Unlock") { showPaywall = true }
-                    .font(.caption).foregroundColor(.orange)
+                    .font(SoberTheme.caption())
+                    .foregroundColor(SoberTheme.lavender)
             } else {
                 Image(systemName: unlocked ? "checkmark.seal.fill" : "lock")
-                    .foregroundColor(unlocked ? .green : .gray)
+                    .foregroundColor(unlocked ? SoberTheme.mint : SoberTheme.textSecondary)
             }
         }
+        .soberCard(padding: 14)
     }
 }

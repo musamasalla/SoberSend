@@ -33,12 +33,13 @@ struct ChallengeCoordinatorView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                SoberTheme.charcoal.ignoresSafeArea()
                 
                 if isLockedOut {
                     lockoutView
                 } else if sequence.isEmpty {
                     ProgressView()
+                        .tint(SoberTheme.lavender)
                 } else if currentStage < sequence.count {
                     let currentType = sequence[currentStage]
                     
@@ -46,15 +47,18 @@ struct ChallengeCoordinatorView: View {
                         // Sober note banner
                         if let note = displayNote {
                             HStack(spacing: 8) {
-                                Text("📝")
+                                Image(systemName: "quote.opening")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(SoberTheme.cream)
                                 Text("Sober you says: \"\(note)\"")
-                                    .font(.callout)
+                                    .font(SoberTheme.body())
                                     .italic()
+                                    .foregroundColor(SoberTheme.cream)
                             }
-                            .foregroundColor(.yellow)
-                            .padding(12)
+                            .padding(14)
                             .frame(maxWidth: .infinity)
-                            .background(Color.yellow.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                            .background(SoberTheme.cream.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(SoberTheme.cream.opacity(0.15), lineWidth: 1))
                             .padding(.horizontal)
                             .padding(.top, 8)
                         }
@@ -64,12 +68,12 @@ struct ChallengeCoordinatorView: View {
                             HStack(spacing: 6) {
                                 ForEach(0..<sequence.count, id: \.self) { i in
                                     Capsule()
-                                        .fill(i < currentStage ? Color.green : (i == currentStage ? Color.blue : Color.gray.opacity(0.3)))
+                                        .fill(i < currentStage ? SoberTheme.mint : (i == currentStage ? SoberTheme.lavender : SoberTheme.surfaceBright))
                                         .frame(height: 4)
                                 }
                             }
                             .padding(.horizontal, 40)
-                            .padding(.top, 12)
+                            .padding(.top, 16)
                         }
                         
                         switch currentType {
@@ -87,6 +91,7 @@ struct ChallengeCoordinatorView: View {
                             }
                         case .combined:
                             Text("Processing...")
+                                .foregroundColor(SoberTheme.textSecondary)
                         }
                     }
                 }
@@ -99,7 +104,7 @@ struct ChallengeCoordinatorView: View {
                     Button("Emergency") {
                         showEmergencyUnlock = true
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(SoberTheme.peach)
                 }
             }
         }
@@ -124,33 +129,37 @@ struct ChallengeCoordinatorView: View {
         VStack(spacing: 24) {
             Spacer()
             
-            Text("🔒")
-                .font(.system(size: 60))
+            ZStack {
+                Circle()
+                    .fill(SoberTheme.peach.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(SoberTheme.peach)
+            }
             
             Text("\(contactOrAppName) is locked")
-                .font(.title2)
-                .bold()
+                .font(SoberTheme.headline(22))
+                .foregroundColor(.white)
             
             Text("You'll thank yourself tomorrow.")
-                .foregroundColor(.gray)
+                .font(SoberTheme.body())
+                .foregroundColor(SoberTheme.textSecondary)
             
             Text(lockoutTimeString)
-                .font(.system(size: 48, weight: .bold, design: .monospaced))
-                .foregroundColor(.red)
+                .font(SoberTheme.mono(48))
+                .foregroundColor(SoberTheme.peach)
             
             Text("remaining")
-                .foregroundColor(.gray)
+                .font(SoberTheme.caption())
+                .foregroundColor(SoberTheme.textSecondary)
             
             Spacer()
             
             Button("Go Back") {
                 onResult(false)
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+            .buttonStyle(SoberSecondaryButtonStyle(color: SoberTheme.peach))
             .padding(.horizontal, 40)
             .padding(.bottom, 50)
         }
@@ -227,7 +236,6 @@ struct ChallengeCoordinatorView: View {
             }
         } else {
             try? modelContext.save()
-            // Activate 10-minute lockout on failure
             activateLockout()
         }
     }

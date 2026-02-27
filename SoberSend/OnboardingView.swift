@@ -7,7 +7,7 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            FloatingOrbsBackground()
             
             TabView(selection: $currentStep) {
                 WelcomeView(currentStep: $currentStep)
@@ -43,13 +43,8 @@ struct OnboardingNextButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
-                .bold()
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
         }
+        .buttonStyle(SoberPrimaryButtonStyle(color: SoberTheme.lavender))
         .padding(.horizontal, 40)
         .padding(.bottom, 50)
     }
@@ -58,22 +53,40 @@ struct OnboardingNextButton: View {
 // MARK: - Welcome View
 struct WelcomeView: View {
     @Binding var currentStep: Int
+    @State private var showLock = false
     
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
             
-            Text("🔒")
-                .font(.system(size: 80))
+            // Animated lock
+            ZStack {
+                Circle()
+                    .fill(SoberTheme.lavender.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                    .scaleEffect(showLock ? 1.0 : 0.8)
+                
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 56))
+                    .foregroundStyle(SoberTheme.lavender)
+                    .scaleEffect(showLock ? 1.0 : 0.5)
+                    .opacity(showLock ? 1.0 : 0.0)
+            }
+            .onAppear {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.3)) {
+                    showLock = true
+                }
+            }
             
             Text("We both know\nwhy you're here.")
-                .font(.system(size: 34, weight: .bold))
+                .font(SoberTheme.title(34))
                 .multilineTextAlignment(.center)
+                .foregroundColor(.white)
                 .padding(.horizontal)
             
             Text("Let's set up your lockdown before you make any decisions you'll regret tomorrow.")
-                .font(.title3)
-                .foregroundColor(.gray)
+                .font(SoberTheme.body(17))
+                .foregroundColor(SoberTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             
@@ -94,29 +107,36 @@ struct SelectDangerContactsView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Who's on the list? 🫣")
-                .font(.system(size: 30, weight: .bold))
+                .font(SoberTheme.title(30))
+                .foregroundColor(.white)
                 .padding(.top, 40)
             
             Text("Select the apps or contacts you can't be trusted with after 10 PM.\n(First one is free).")
-                .foregroundColor(.gray)
+                .foregroundColor(SoberTheme.textSecondary)
+                .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             
             Spacer()
             
             VStack(spacing: 16) {
-                Image(systemName: lockdownManager.isAuthorized ? "checkmark.shield.fill" : "shield.lefthalf.filled")
-                    .font(.system(size: 60))
-                    .foregroundColor(lockdownManager.isAuthorized ? .green : .blue)
+                ZStack {
+                    Circle()
+                        .fill(lockdownManager.isAuthorized ? SoberTheme.mint.opacity(0.15) : SoberTheme.lavender.opacity(0.15))
+                        .frame(width: 100, height: 100)
+                    Image(systemName: lockdownManager.isAuthorized ? "checkmark.shield.fill" : "shield.lefthalf.filled")
+                        .font(.system(size: 44))
+                        .foregroundColor(lockdownManager.isAuthorized ? SoberTheme.mint : SoberTheme.lavender)
+                }
                 
                 if lockdownManager.isAuthorized {
-                    Text("Screen Time Access Granted ✅")
-                        .foregroundColor(.green)
-                        .font(.headline)
+                    Text("Screen Time Access Granted")
+                        .foregroundColor(SoberTheme.mint)
+                        .font(SoberTheme.headline())
                 } else {
                     Text("We need Screen Time access to block apps and contacts during your lockdown window.")
-                        .font(.callout)
-                        .foregroundColor(.gray)
+                        .font(SoberTheme.body())
+                        .foregroundColor(SoberTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
@@ -124,14 +144,9 @@ struct SelectDangerContactsView: View {
                 Button(action: {
                     Task { await lockdownManager.requestAuthorization() }
                 }) {
-                    Text(lockdownManager.isAuthorized ? "Access Granted" : "Grant Screen Time Access")
-                        .font(.headline)
-                        .bold()
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(lockdownManager.isAuthorized ? Color.green : Color.blue, in: RoundedRectangle(cornerRadius: 16))
+                    Text(lockdownManager.isAuthorized ? "Access Granted ✓" : "Grant Screen Time Access")
                 }
+                .buttonStyle(SoberPrimaryButtonStyle(color: lockdownManager.isAuthorized ? SoberTheme.mint : SoberTheme.lavender))
                 .disabled(lockdownManager.isAuthorized)
                 .padding(.horizontal, 40)
             }
@@ -153,32 +168,33 @@ struct SetScheduleView: View {
     @State private var startTime: Date = Date()
     @State private var endTime: Date = Date()
     
-    // Days: 1=Sun, 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat
     let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
-    let dayNames  = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     
     var body: some View {
         VStack(spacing: 28) {
             Text("When are you\ndangerous? 🌙")
-                .font(.system(size: 30, weight: .bold))
+                .font(SoberTheme.title(30))
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.top, 40)
             
             Text("Default is 10 PM to 7 AM.\nBe honest with yourself.")
-                .foregroundColor(.gray)
+                .foregroundColor(SoberTheme.textSecondary)
+                .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            // Day of week selector
+            // Day selector
             VStack(alignment: .leading, spacing: 10) {
                 Text("Active nights")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                    .font(SoberTheme.caption())
+                    .foregroundColor(SoberTheme.textSecondary)
                     .textCase(.uppercase)
+                    .tracking(0.5)
                 
                 HStack(spacing: 8) {
                     ForEach(0..<7, id: \.self) { i in
-                        let weekday = i + 1  // Calendar weekday (1=Sun…7=Sat)
+                        let weekday = i + 1
                         let isActive = lockdownManager.isDayActive(weekday)
                         let isWeekend = weekday == 6 || weekday == 7
                         
@@ -186,10 +202,15 @@ struct SetScheduleView: View {
                             lockdownManager.toggleDay(weekday)
                         }) {
                             Text(dayLabels[i])
-                                .font(.system(size: 14, weight: .bold))
+                                .font(SoberTheme.caption(13))
+                                .fontWeight(.bold)
                                 .frame(width: 38, height: 38)
-                                .background(isActive ? (isWeekend ? Color.orange : Color.blue) : Color.white.opacity(0.08))
-                                .foregroundColor(isActive ? .white : .gray)
+                                .background(
+                                    isActive
+                                    ? (isWeekend ? SoberTheme.peach : SoberTheme.lavender)
+                                    : SoberTheme.surfaceBright
+                                )
+                                .foregroundColor(isActive ? SoberTheme.charcoal : SoberTheme.textSecondary)
                                 .clipShape(Circle())
                         }
                     }
@@ -197,21 +218,20 @@ struct SetScheduleView: View {
                 
                 HStack(spacing: 12) {
                     Button("Weekends") { setWeekends() }
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                        .font(SoberTheme.caption())
+                        .foregroundColor(SoberTheme.peach)
                     Button("Every Night") { lockdownManager.setAllDays(active: true) }
-                        .font(.caption)
-                        .foregroundColor(.blue)
+                        .font(SoberTheme.caption())
+                        .foregroundColor(SoberTheme.lavender)
                 }
             }
-            .padding()
-            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+            .soberCard()
             .padding(.horizontal, 30)
             
             // Time pickers
             VStack(spacing: 16) {
                 HStack {
-                    Image(systemName: "moon.fill").foregroundColor(.indigo)
+                    Image(systemName: "moon.fill").foregroundColor(SoberTheme.lavender)
                     DatePicker("Lockdown starts", selection: $startTime, displayedComponents: .hourAndMinute)
                         .onChange(of: startTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -219,9 +239,9 @@ struct SetScheduleView: View {
                             lockdownManager.lockStartMinute = c.minute ?? 0
                         }
                 }
-                Divider()
+                Divider().background(SoberTheme.border)
                 HStack {
-                    Image(systemName: "sunrise.fill").foregroundColor(.orange)
+                    Image(systemName: "sunrise.fill").foregroundColor(SoberTheme.peach)
                     DatePicker("Lockdown ends", selection: $endTime, displayedComponents: .hourAndMinute)
                         .onChange(of: endTime) { _, v in
                             let c = Calendar.current.dateComponents([.hour, .minute], from: v)
@@ -230,8 +250,7 @@ struct SetScheduleView: View {
                         }
                 }
             }
-            .padding()
-            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+            .soberCard()
             .padding(.horizontal, 30)
             
             Spacer()
@@ -247,10 +266,9 @@ struct SetScheduleView: View {
     }
     
     private func setWeekends() {
-        // Fri=6, Sat=7 on Calendar (1=Sun)
         lockdownManager.setAllDays(active: false)
-        lockdownManager.toggleDay(6) // Friday
-        lockdownManager.toggleDay(7) // Saturday
+        lockdownManager.toggleDay(6)
+        lockdownManager.toggleDay(7)
     }
 }
 
@@ -269,11 +287,13 @@ struct DemoChallengeView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("The Vibe Check 🧠")
-                .font(.system(size: 30, weight: .bold))
+                .font(SoberTheme.title(30))
+                .foregroundColor(.white)
                 .padding(.top, 40)
             
             Text("Try this while you're sober.\nImagine doing it at 2 AM after 6 drinks.")
-                .foregroundColor(.gray)
+                .foregroundColor(SoberTheme.textSecondary)
+                .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             
@@ -281,49 +301,57 @@ struct DemoChallengeView: View {
             
             if demoPassed {
                 VStack(spacing: 16) {
-                    Text("✅")
-                        .font(.system(size: 60))
+                    ZStack {
+                        Circle()
+                            .fill(SoberTheme.mint.opacity(0.15))
+                            .frame(width: 100, height: 100)
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(SoberTheme.mint)
+                    }
                     Text("You passed. Easy, right?")
-                        .font(.title2)
-                        .bold()
+                        .font(SoberTheme.headline(20))
+                        .foregroundColor(.white)
                     Text("Now imagine doing that after a few drinks. That's the point.")
-                        .foregroundColor(.gray)
+                        .foregroundColor(SoberTheme.textSecondary)
+                        .font(SoberTheme.body())
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
                 }
             } else {
                 VStack(spacing: 20) {
                     Text("Solve this:")
-                        .font(.headline)
-                        .foregroundColor(.gray)
+                        .font(SoberTheme.headline())
+                        .foregroundColor(SoberTheme.textSecondary)
                     
                     Text("\(num1) + \(num2) = ?")
-                        .font(.system(size: 44, weight: .bold, design: .monospaced))
+                        .font(SoberTheme.mono(44))
+                        .foregroundColor(SoberTheme.lavender)
                     
                     TextField("Your answer", text: $userAnswer)
                         .keyboardType(.numberPad)
-                        .font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .font(SoberTheme.mono(28))
                         .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
                         .padding()
-                        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                        .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(showWrong ? SoberTheme.peach : SoberTheme.border, lineWidth: 1)
+                        )
                         .padding(.horizontal, 60)
                     
                     if showWrong {
                         Text("Nope. Try again.")
-                            .foregroundColor(.red)
-                            .font(.callout)
-                            .bold()
+                            .foregroundColor(SoberTheme.peach)
+                            .font(SoberTheme.body())
+                            .fontWeight(.semibold)
                     }
                     
                     Button(action: checkDemo) {
                         Text("Submit")
-                            .font(.headline)
-                            .bold()
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(userAnswer.isEmpty ? Color.gray : Color.blue, in: RoundedRectangle(cornerRadius: 16))
                     }
+                    .buttonStyle(SoberPrimaryButtonStyle(color: userAnswer.isEmpty ? SoberTheme.surfaceBright : SoberTheme.lavender))
                     .disabled(userAnswer.isEmpty)
                     .padding(.horizontal, 40)
                 }
@@ -340,7 +368,7 @@ struct DemoChallengeView: View {
     private func checkDemo() {
         guard let answer = Int(userAnswer) else { return }
         if answer == correctAnswer {
-            withAnimation { demoPassed = true }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { demoPassed = true }
             HapticManager.shared.notification(type: .success)
             SoundManager.shared.playSuccess()
         } else {
@@ -365,11 +393,13 @@ struct SetIntentionsView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Notes to future you ✍️")
-                .font(.system(size: 30, weight: .bold))
+                .font(SoberTheme.title(30))
+                .foregroundColor(.white)
                 .padding(.top, 40)
             
             Text("Write yourself a sober note. We'll show this to you when you try to unlock an app or contact.")
-                .foregroundColor(.gray)
+                .foregroundColor(SoberTheme.textSecondary)
+                .font(SoberTheme.body())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             
@@ -377,22 +407,22 @@ struct SetIntentionsView: View {
                 TextEditor(text: $intentionText)
                     .focused($isFocused)
                     .foregroundColor(.white)
-                    .font(.body)
+                    .font(SoberTheme.body())
                     .scrollContentBackground(.hidden)
                     .padding(12)
                     .frame(height: 160)
                 
                 if intentionText.isEmpty {
                     Text("e.g., \"You already texted him twice this week. Don't do it.\"")
-                        .foregroundColor(.white.opacity(0.3))
-                        .font(.body)
+                        .foregroundColor(SoberTheme.textSecondary.opacity(0.5))
+                        .font(SoberTheme.body())
                         .padding(.top, 20)
                         .padding(.leading, 16)
                         .allowsHitTesting(false)
                 }
             }
-            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.15), lineWidth: 1))
+            .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(SoberTheme.lavender.opacity(0.2), lineWidth: 1))
             .padding(.horizontal, 30)
             
             Spacer()
@@ -412,7 +442,7 @@ struct SetIntentionsView: View {
     }
 }
 
-// MARK: - Onboarding Paywall Step (wraps the full-screen PaywallView)
+// MARK: - Onboarding Paywall Step
 struct OnboardingPaywallStep: View {
     @Environment(StoreManager.self) private var storeManager
     @Environment(NotificationManager.self) private var notificationManager
@@ -428,8 +458,6 @@ struct OnboardingPaywallStep: View {
     }
 
     var body: some View {
-        // Pass "Continue with Free" directly into the PaywallView so it renders
-        // INSIDE the scroll content — above the legal footer and above the TabView dots.
         PaywallView(onContinueWithFree: { finishOnboarding() })
             .environment(storeManager)
             .environment(notificationManager)

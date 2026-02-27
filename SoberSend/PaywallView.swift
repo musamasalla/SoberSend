@@ -8,7 +8,6 @@ struct PaywallView: View {
     @Environment(StoreManager.self) private var storeManager
 
     /// When set, renders a "Continue with Free" button inside the scroll content.
-    /// Used during onboarding so it stays above the TabView page indicator dots.
     var onContinueWithFree: (() -> Void)? = nil
 
     @State private var selectedProductID: String? = nil
@@ -32,18 +31,15 @@ struct PaywallView: View {
         return storeManager.products.first { $0.id == id }
     }
 
-    // Detect if the yearly plan has a free trial introductory offer
     private var yearlyHasTrial: Bool {
         yearlyProduct?.subscription?.introductoryOffer?.paymentMode == .freeTrial
     }
 
-    // Per-month price string for yearly plan
     private func yearlyPerMonth(_ product: Product) -> String {
         let perMonth = product.price / 12
         return product.priceFormatStyle.format(perMonth) + "/mo"
     }
 
-    // CTA label: shows "Start Free Trial" if trial available and yearly selected
     private var ctaLabel: String {
         guard let product = selectedProduct else { return "Subscribe" }
         if product.id == yearlyID, yearlyHasTrial {
@@ -59,7 +55,6 @@ struct PaywallView: View {
 
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
-                    // Safe area spacer + close button (hidden during onboarding — use "Continue with Free")
                     if onContinueWithFree == nil {
                         closeButton
                             .padding(.horizontal, 20)
@@ -71,7 +66,6 @@ struct PaywallView: View {
                     heroSection
                         .padding(.top, 12)
 
-                    // Trial notice badge
                     if yearlyHasTrial {
                         trialBadge
                             .padding(.top, 16)
@@ -92,19 +86,16 @@ struct PaywallView: View {
 
                     footerSection
 
-                    // "Continue with Free" rendered INSIDE the scroll so it's
-                    // always visible above the TabView page-indicator dots.
                     if let continueAction = onContinueWithFree {
                         Button("Continue with Free") { continueAction() }
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.45))
+                            .font(SoberTheme.body())
+                            .foregroundStyle(SoberTheme.textSecondary)
                             .padding(.top, 4)
                             .padding(.bottom, 52)
                     } else {
                         Spacer().frame(height: 44)
                     }
                 }
-                // iPad: constrain to a readable width
                 .frame(maxWidth: 560)
                 .frame(maxWidth: .infinity)
             }
@@ -112,17 +103,15 @@ struct PaywallView: View {
 
             if didPurchase { successOverlay }
         }
-        // Use safeAreaInset so we don't fight with the nav bar
-        .background(Color.black)
+        .background(SoberTheme.charcoal)
         .preferredColorScheme(.dark)
         .onAppear {
             if selectedProductID == nil { selectedProductID = yearlyID }
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
                 shieldGlow = true
             }
         }
         .task {
-            // requestProducts already called in StoreManager.init(), but retry if still empty.
             if storeManager.products.isEmpty && !storeManager.isLoadingProducts {
                 await storeManager.requestProducts()
             }
@@ -130,16 +119,24 @@ struct PaywallView: View {
         }
     }
 
-    // MARK: - Background (near-black, subtle top glow)
+    // MARK: - Background
     private var backgroundView: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            // Subtle top-center glow only
+            SoberTheme.charcoal.ignoresSafeArea()
+            
+            // Soft lavender glow at top
             Circle()
-                .fill(Color(red: 0.40, green: 0.28, blue: 0.90).opacity(0.12))
+                .fill(SoberTheme.lavender.opacity(0.08))
                 .frame(width: 400, height: 400)
                 .blur(radius: 100)
                 .offset(y: -180)
+            
+            // Subtle mint glow at bottom
+            Circle()
+                .fill(SoberTheme.mint.opacity(0.04))
+                .frame(width: 300, height: 300)
+                .blur(radius: 80)
+                .offset(y: 300)
         }
         .ignoresSafeArea()
     }
@@ -151,7 +148,7 @@ struct PaywallView: View {
             Button { dismiss() } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(.white.opacity(0.35))
+                    .foregroundStyle(SoberTheme.textSecondary)
             }
             .accessibilityLabel("Close")
         }
@@ -162,39 +159,22 @@ struct PaywallView: View {
         VStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color(red: 0.45, green: 0.32, blue: 0.95).opacity(shieldGlow ? 0.50 : 0.20),
-                                .clear
-                            ],
-                            center: .center,
-                            startRadius: 8,
-                            endRadius: 75
-                        )
-                    )
-                    .frame(width: 150, height: 150)
-                    .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: shieldGlow)
+                    .fill(SoberTheme.lavender.opacity(shieldGlow ? 0.25 : 0.1))
+                    .frame(width: 130, height: 130)
+                    .blur(radius: 10)
 
                 Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 68, weight: .semibold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(red: 0.80, green: 0.72, blue: 1.0), Color(red: 0.45, green: 0.32, blue: 0.95)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .shadow(color: Color(red: 0.45, green: 0.32, blue: 0.95).opacity(0.55), radius: 22, y: 6)
+                    .font(.system(size: 64, weight: .semibold))
+                    .foregroundStyle(SoberTheme.lavender)
             }
 
             VStack(spacing: 6) {
                 Text("Unlock Full SoberSend")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(SoberTheme.title(28))
                     .foregroundStyle(.white)
                 Text("Your complete sobriety shield, every night.")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.60))
+                    .font(SoberTheme.body())
+                    .foregroundStyle(SoberTheme.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -206,18 +186,19 @@ struct PaywallView: View {
         HStack(spacing: 8) {
             Image(systemName: "gift.fill")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(red: 0.45, green: 0.95, blue: 0.65))
+                .foregroundStyle(SoberTheme.mint)
             Text("7-day free trial included with the yearly plan — cancel anytime")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(red: 0.45, green: 0.95, blue: 0.65))
+                .font(SoberTheme.caption())
+                .fontWeight(.semibold)
+                .foregroundStyle(SoberTheme.mint)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
-        .background(Color(red: 0.45, green: 0.95, blue: 0.65).opacity(0.10), in: .rect(cornerRadius: 12))
+        .background(SoberTheme.mint.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color(red: 0.45, green: 0.95, blue: 0.65).opacity(0.25), lineWidth: 1)
+                .strokeBorder(SoberTheme.mint.opacity(0.25), lineWidth: 1)
         )
     }
 
@@ -225,32 +206,12 @@ struct PaywallView: View {
     private var featuresSection: some View {
         VStack(spacing: 10) {
             HStack(spacing: 10) {
-                FeatureCard(
-                    icon: "person.crop.circle.badge.plus",
-                    title: "Unlimited Contacts",
-                    subtitle: "Lock as many as you need",
-                    color: Color(red: 0.45, green: 0.32, blue: 0.95)
-                )
-                FeatureCard(
-                    icon: "apps.iphone",
-                    title: "Unlimited Apps",
-                    subtitle: "Block your biggest triggers",
-                    color: Color(red: 0.20, green: 0.60, blue: 1.0)
-                )
+                FeatureCard(icon: "person.crop.circle.badge.plus", title: "Unlimited Contacts", subtitle: "Lock as many as you need", color: SoberTheme.lavender)
+                FeatureCard(icon: "apps.iphone", title: "Unlimited Apps", subtitle: "Block your biggest triggers", color: SoberTheme.skyBlue)
             }
             HStack(spacing: 10) {
-                FeatureCard(
-                    icon: "flame.fill",
-                    title: "Hard & Expert",
-                    subtitle: "Unlock all challenge levels",
-                    color: Color(red: 1.0, green: 0.42, blue: 0.22)
-                )
-                FeatureCard(
-                    icon: "chart.bar.fill",
-                    title: "Full Stats",
-                    subtitle: "Track progress over time",
-                    color: Color(red: 0.22, green: 0.80, blue: 0.55)
-                )
+                FeatureCard(icon: "flame.fill", title: "Hard & Expert", subtitle: "Unlock all challenge levels", color: SoberTheme.peach)
+                FeatureCard(icon: "chart.bar.fill", title: "Full Stats", subtitle: "Track progress over time", color: SoberTheme.mint)
             }
         }
     }
@@ -262,7 +223,7 @@ struct PaywallView: View {
                 PlanCard(
                     product: yearly,
                     badge: yearlyHasTrial ? "7-Day Free Trial" : "Best Value",
-                    badgeColor: yearlyHasTrial ? Color(red: 0.22, green: 0.80, blue: 0.55) : Color(red: 0.45, green: 0.32, blue: 0.95),
+                    badgeColor: yearlyHasTrial ? SoberTheme.mint : SoberTheme.lavender,
                     subtitle: "Only \(yearlyPerMonth(yearly)) · billed $\(yearly.displayPrice)/yr",
                     isSelected: selectedProductID == yearlyID
                 ) { selectedProductID = yearlyID }
@@ -277,32 +238,31 @@ struct PaywallView: View {
                 ) { selectedProductID = monthlyID }
             }
             if storeManager.isLoadingProducts {
-                // Loading state
                 HStack(spacing: 10) {
-                    ProgressView().tint(.white.opacity(0.4))
+                    ProgressView().tint(SoberTheme.lavender)
                     Text("Loading plans…")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.4))
+                        .font(SoberTheme.body())
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
             } else if storeManager.products.isEmpty {
-                // Error/empty state — show a retry button
                 VStack(spacing: 12) {
                     Text(storeManager.productsLoadError != nil
                          ? "Couldn't load plans."
                          : "No plans available.")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.50))
+                        .font(SoberTheme.body())
+                        .foregroundStyle(SoberTheme.textSecondary)
                     Button {
                         Task { await storeManager.requestProducts() }
                     } label: {
                         Label("Retry", systemImage: "arrow.clockwise")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(SoberTheme.caption())
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 24)
                             .padding(.vertical, 10)
-                            .background(.white.opacity(0.10), in: Capsule())
+                            .background(SoberTheme.lavender.opacity(0.3), in: Capsule())
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -319,27 +279,19 @@ struct PaywallView: View {
             } label: {
                 ZStack {
                     if isPurchasing {
-                        ProgressView().tint(.white)
+                        ProgressView().tint(SoberTheme.charcoal)
                     } else {
                         HStack(spacing: 8) {
                             Image(systemName: selectedProduct?.id == yearlyID && yearlyHasTrial ? "gift.fill" : "lock.open.fill")
                             Text(ctaLabel)
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .font(SoberTheme.headline())
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(SoberTheme.charcoal)
                     }
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.52, green: 0.38, blue: 1.0), Color(red: 0.32, green: 0.20, blue: 0.88)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    in: .rect(cornerRadius: 16)
-                )
-                .shadow(color: Color(red: 0.45, green: 0.32, blue: 0.95).opacity(0.40), radius: 18, y: 6)
+                .background(SoberTheme.lavender, in: RoundedRectangle(cornerRadius: 16))
             }
             .disabled(isPurchasing || isRestoring || selectedProduct == nil)
             .alert("Purchase Error", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
@@ -348,11 +300,10 @@ struct PaywallView: View {
                 Text(errorMessage ?? "")
             }
 
-            // Sub-note under CTA
             if selectedProduct?.id == yearlyID, yearlyHasTrial {
                 Text("No charge today. Trial ends after 7 days.")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.40))
+                    .font(SoberTheme.caption())
+                    .foregroundStyle(SoberTheme.textSecondary)
             }
         }
     }
@@ -364,28 +315,28 @@ struct PaywallView: View {
                 Task { await handleRestore() }
             } label: {
                 HStack(spacing: 6) {
-                    if isRestoring { ProgressView().tint(.white.opacity(0.4)).scaleEffect(0.8) }
+                    if isRestoring { ProgressView().tint(SoberTheme.lavender).scaleEffect(0.8) }
                     Text("Restore Purchases")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.45))
+                        .font(SoberTheme.caption())
+                        .foregroundStyle(SoberTheme.textSecondary)
                         .underline()
                 }
             }
             .disabled(isRestoring || isPurchasing)
 
             Text("Subscriptions auto-renew unless cancelled at least 24 hours before the period ends. Cancel anytime in your Apple ID settings.")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.25))
+                .font(SoberTheme.caption(10))
+                .foregroundStyle(SoberTheme.textSecondary.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             HStack(spacing: 16) {
                 Link("Privacy Policy", destination: URL(string: "https://musamasalla.github.io/SoberSend/privacy.html")!)
-                Text("·").foregroundStyle(.white.opacity(0.2))
+                Text("·").foregroundStyle(SoberTheme.textSecondary.opacity(0.4))
                 Link("Terms of Service", destination: URL(string: "https://musamasalla.github.io/SoberSend/terms.html")!)
             }
-            .font(.caption2)
-            .foregroundStyle(.white.opacity(0.3))
+            .font(SoberTheme.caption(10))
+            .foregroundStyle(SoberTheme.textSecondary.opacity(0.6))
             .padding(.top, 4)
         }
         .padding(.top, 20)
@@ -394,25 +345,28 @@ struct PaywallView: View {
     // MARK: - Success Overlay
     private var successOverlay: some View {
         ZStack {
-            Color.black.opacity(0.75).ignoresSafeArea()
+            SoberTheme.charcoal.opacity(0.85).ignoresSafeArea()
             VStack(spacing: 20) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 70))
-                    .foregroundStyle(
-                        LinearGradient(colors: [.green, Color(red: 0.22, green: 0.80, blue: 0.55)], startPoint: .top, endPoint: .bottom)
-                    )
+                ZStack {
+                    Circle()
+                        .fill(SoberTheme.mint.opacity(0.15))
+                        .frame(width: 120, height: 120)
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 64))
+                        .foregroundStyle(SoberTheme.mint)
+                }
+                
                 Text("You're Premium! 🎉")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(SoberTheme.title(26))
                     .foregroundStyle(.white)
                 Text("All features are now unlocked.\nStay strong tonight.")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.70))
+                    .font(SoberTheme.body())
+                    .foregroundStyle(SoberTheme.textSecondary)
                     .multilineTextAlignment(.center)
+                
                 Button("Let's Go →") { dismiss() }
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 200, height: 52)
-                    .background(Color(red: 0.45, green: 0.32, blue: 0.95), in: .rect(cornerRadius: 16))
+                    .buttonStyle(SoberPrimaryButtonStyle(color: SoberTheme.lavender))
+                    .frame(width: 200)
                     .padding(.top, 4)
             }
         }
@@ -430,7 +384,7 @@ struct PaywallView: View {
                 withAnimation(.spring(response: 0.4)) { didPurchase = true }
             }
         } catch StoreKitError.userCancelled {
-            // Silently ignore user cancellation
+            // Silently ignore
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -457,27 +411,27 @@ private struct FeatureCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(color)
-                .frame(width: 38, height: 38)
-                .background(color.opacity(0.14), in: .rect(cornerRadius: 10))
+                .frame(width: 36, height: 36)
+                .background(color.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(SoberTheme.headline(13))
                     .foregroundStyle(.white)
                 Text(subtitle)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.48))
+                    .font(SoberTheme.caption(11))
+                    .foregroundStyle(SoberTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.05), in: .rect(cornerRadius: 16))
+        .background(SoberTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                .strokeBorder(SoberTheme.border, lineWidth: 1)
         )
     }
 }
@@ -499,13 +453,13 @@ private struct PlanCard: View {
                 ZStack {
                     Circle()
                         .strokeBorder(
-                            isSelected ? Color(red: 0.52, green: 0.38, blue: 1.0) : Color.white.opacity(0.22),
+                            isSelected ? SoberTheme.lavender : SoberTheme.border,
                             lineWidth: 2
                         )
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(Color(red: 0.52, green: 0.38, blue: 1.0))
+                            .fill(SoberTheme.lavender)
                             .frame(width: 12, height: 12)
                     }
                 }
@@ -513,39 +467,38 @@ private struct PlanCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
                         Text(product.displayName)
-                            .font(.system(size: 15, weight: .bold))
+                            .font(SoberTheme.headline(15))
                             .foregroundStyle(.white)
                         if let badge {
                             Text(badge)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.white)
+                                .font(SoberTheme.caption(10))
+                                .fontWeight(.bold)
+                                .foregroundStyle(SoberTheme.charcoal)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
                                 .background(badgeColor, in: Capsule())
                         }
                     }
                     Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.50))
+                        .font(SoberTheme.caption())
+                        .foregroundStyle(SoberTheme.textSecondary)
                 }
 
                 Spacer(minLength: 4)
 
                 Text(product.displayPrice)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(SoberTheme.headline(16))
                     .foregroundStyle(.white)
             }
             .padding(16)
             .background(
-                isSelected
-                    ? Color(red: 0.52, green: 0.38, blue: 1.0).opacity(0.16)
-                    : Color.white.opacity(0.04),
-                in: .rect(cornerRadius: 16)
+                isSelected ? SoberTheme.lavender.opacity(0.12) : SoberTheme.surface,
+                in: RoundedRectangle(cornerRadius: 16)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(
-                        isSelected ? Color(red: 0.52, green: 0.38, blue: 1.0) : Color.white.opacity(0.09),
+                        isSelected ? SoberTheme.lavender.opacity(0.5) : SoberTheme.border,
                         lineWidth: isSelected ? 1.5 : 1
                     )
             )
