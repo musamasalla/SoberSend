@@ -1,44 +1,39 @@
 import SwiftUI
 
 // MARK: - SoberSend Light Pastel Design System
-// Inspired by Drops / Duolingo — light, airy, clean, playful.
+// Clean, uniform. Settings page is the gold standard for card grouping.
 
 enum SoberTheme {
     
     // MARK: - Core Colors
     
     /// Page background — pale ice-blue
-    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)    // #EBF4FA
+    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)
     /// Card surface — pure white
     static let card = Color.white
     /// Primary text — near-black
-    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)   // #1A1A1A
+    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)
     /// Secondary text — medium gray
-    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58) // #8E8E93
+    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58)
     /// CTA / primary button — black
-    static let ctaBlack = Color(red: 0.10, green: 0.10, blue: 0.10)      // #1A1A1A
+    static let ctaBlack = Color(red: 0.10, green: 0.10, blue: 0.10)
     
-    // MARK: - Pastel Accent Cards
+    // MARK: - Pastel Accents
     
-    /// Soft lavender — lock, primary accent
-    static let lavenderCard = Color(red: 0.91, green: 0.88, blue: 0.97)  // #E8E0F8
-    static let lavenderText = Color(red: 0.45, green: 0.35, blue: 0.70)  // #735AB3
+    static let lavenderCard = Color(red: 0.91, green: 0.88, blue: 0.97)
+    static let lavenderText = Color(red: 0.45, green: 0.35, blue: 0.70)
     
-    /// Soft mint — success, streaks, safe
-    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)      // #D4F5E9
-    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)      // #2E8C60
+    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)
+    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)
     
-    /// Soft peach — danger, warnings, locked
-    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)     // #FFE0DC
-    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)     // #B34D40
+    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)
+    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)
     
-    /// Soft cream — highlights, info
-    static let creamCard = Color(red: 1.00, green: 0.97, blue: 0.91)     // #FFF8E7
-    static let creamText = Color(red: 0.60, green: 0.50, blue: 0.25)     // #998040
+    static let creamCard = Color(red: 1.00, green: 0.97, blue: 0.91)
+    static let creamText = Color(red: 0.60, green: 0.50, blue: 0.25)
     
-    /// Soft blue — secondary info
-    static let blueCard = Color(red: 0.85, green: 0.92, blue: 0.98)      // #D9EBFA
-    static let blueText = Color(red: 0.20, green: 0.45, blue: 0.70)      // #3373B3
+    static let blueCard = Color(red: 0.85, green: 0.92, blue: 0.98)
+    static let blueText = Color(red: 0.20, green: 0.45, blue: 0.70)
     
     // MARK: - Fonts (Rounded)
     
@@ -59,7 +54,7 @@ enum SoberTheme {
     }
 }
 
-// MARK: - White Card Modifier (with shadow)
+// MARK: - White Card Modifier
 
 struct SoberCardModifier: ViewModifier {
     var padding: CGFloat = 16
@@ -69,7 +64,7 @@ struct SoberCardModifier: ViewModifier {
         content
             .padding(padding)
             .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: cornerRadius))
-            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+            .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
     }
 }
 
@@ -79,7 +74,37 @@ extension View {
     }
 }
 
-// MARK: - Black CTA Button Style
+// MARK: - Grouped Row Helper (Settings-style)
+
+struct SoberRow: View {
+    let icon: String
+    let iconBg: Color
+    let iconFg: Color
+    let title: String
+    var subtitle: String? = nil
+    var trailing: AnyView? = nil
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(iconBg).frame(width: 40, height: 40)
+                Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundStyle(iconFg)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(SoberTheme.headline()).foregroundStyle(SoberTheme.textPrimary)
+                if let subtitle {
+                    Text(subtitle).font(SoberTheme.caption()).foregroundStyle(SoberTheme.textSecondary)
+                }
+            }
+            Spacer()
+            if let trailing { trailing }
+            else { Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(SoberTheme.textSecondary.opacity(0.5)) }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Black CTA Button
 
 struct SoberPrimaryButtonStyle: ButtonStyle {
     var color: Color = SoberTheme.ctaBlack
@@ -106,16 +131,13 @@ struct SoberSecondaryButtonStyle: ButtonStyle {
             .foregroundStyle(color)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(color.opacity(0.3), lineWidth: 1.5)
-            )
+            .background(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.3), lineWidth: 1.5))
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
-// MARK: - Pastel Pill Badge
+// MARK: - Pill Badge
 
 struct SoberPill: View {
     let text: String
@@ -134,7 +156,7 @@ struct SoberPill: View {
     }
 }
 
-// MARK: - Section Header
+// MARK: - Section Header (Settings-style)
 
 struct SoberSectionHeader: View {
     let title: String
@@ -157,45 +179,7 @@ struct SoberSectionHeader: View {
     }
 }
 
-// MARK: - Animated Lock Icon (Light version)
-
-struct AnimatedLockIcon: View {
-    let isActive: Bool
-    @State private var glowAmount: CGFloat = 0.3
-    
-    var body: some View {
-        ZStack {
-            // Soft pastel circle
-            Circle()
-                .fill(isActive ? SoberTheme.peachCard : SoberTheme.mintCard)
-                .frame(width: 80, height: 80)
-                .scaleEffect(isActive ? (0.95 + glowAmount * 0.1) : 1.0)
-            
-            Image(systemName: isActive ? "lock.fill" : "lock.open.fill")
-                .font(.system(size: 32, weight: .semibold))
-                .foregroundStyle(isActive ? SoberTheme.peachText : SoberTheme.mintText)
-                .symbolEffect(.bounce, value: isActive)
-        }
-        .onAppear {
-            if isActive {
-                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                    glowAmount = 1.0
-                }
-            }
-        }
-        .onChange(of: isActive) { _, active in
-            if active {
-                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                    glowAmount = 1.0
-                }
-            } else {
-                withAnimation { glowAmount = 0.3 }
-            }
-        }
-    }
-}
-
-// MARK: - Custom Tab Bar (Light)
+// MARK: - Tab Bar (Pill-shaped)
 
 struct SoberTabBar: View {
     @Binding var selectedTab: Int
@@ -226,39 +210,41 @@ struct SoberTabBar: View {
         HStack(spacing: 0) {
             ForEach(0..<tabs.count, id: \.self) { index in
                 Button {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         selectedTab = index
                     }
                 } label: {
                     VStack(spacing: 4) {
                         ZStack {
                             if selectedTab == index {
-                                Capsule()
+                                Circle()
                                     .fill(tabColors[index])
-                                    .frame(width: 56, height: 32)
+                                    .frame(width: 44, height: 44)
                                     .matchedGeometryEffect(id: "tabPill", in: tabNS)
                             }
                             
                             Image(systemName: tabs[index].icon)
-                                .font(.system(size: 18, weight: selectedTab == index ? .semibold : .regular))
-                                .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary)
+                                .font(.system(size: selectedTab == index ? 20 : 18, weight: selectedTab == index ? .bold : .regular))
+                                .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary.opacity(0.6))
                         }
-                        .frame(height: 32)
+                        .frame(height: 44)
                         
                         Text(tabs[index].label)
                             .font(SoberTheme.caption(10))
-                            .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary)
+                            .fontWeight(selectedTab == index ? .bold : .medium)
+                            .foregroundStyle(selectedTab == index ? tabIconColors[index] : SoberTheme.textSecondary.opacity(0.6))
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.vertical, 8)
-        .padding(.bottom, 4)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
         .background(
             SoberTheme.card
-                .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
+                .shadow(color: .black.opacity(0.06), radius: 12, y: -4)
+                .ignoresSafeArea(edges: .bottom)
         )
     }
 }

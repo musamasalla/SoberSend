@@ -117,7 +117,7 @@ struct MorningReportView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 4)
                     
-                    summaryCard
+                    summarySection
                     shareSection
                     logsSection
                 }
@@ -137,72 +137,110 @@ struct MorningReportView: View {
         }
     }
     
+    // MARK: - Empty State (proper card)
+    
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer(minLength: 60)
-            Image(systemName: "moon.zzz.fill")
-                .font(.system(size: 50))
-                .foregroundStyle(SoberTheme.textSecondary.opacity(0.5))
-            Text("No activity last night")
-                .font(SoberTheme.headline(20))
-                .foregroundStyle(SoberTheme.textPrimary)
-            Text("You didn't try to unlock anything.\nResponsible. Boring. But responsible.")
-                .font(SoberTheme.body())
-                .foregroundStyle(SoberTheme.textSecondary)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 0) {
+            Spacer(minLength: 80)
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(SoberTheme.blueCard)
+                        .frame(width: 72, height: 72)
+                    Image(systemName: "moon.zzz.fill")
+                        .font(.system(size: 30))
+                        .foregroundStyle(SoberTheme.blueText)
+                }
+                Text("No activity last night")
+                    .font(SoberTheme.headline(20))
+                    .foregroundStyle(SoberTheme.textPrimary)
+                Text("You didn't try to unlock anything.\nResponsible. Boring. But responsible.")
+                    .font(SoberTheme.body())
+                    .foregroundStyle(SoberTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+            .soberCard()
             Spacer()
         }
     }
     
-    private var summaryCard: some View {
-        PastelAccentCard(bgColor: saves > 0 ? SoberTheme.mintCard : SoberTheme.creamCard) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Last Night's Damage Report")
-                    .font(SoberTheme.headline(18))
-                    .foregroundStyle(SoberTheme.textPrimary)
-                Text(saves > 0
-                     ? "SoberSend blocked you \(saves) time\(saves == 1 ? "" : "s"). Nice save. 🛡️"
-                     : "You passed your challenges. Hope it was worth it. 😅")
-                    .font(SoberTheme.body())
-                    .foregroundStyle(SoberTheme.textSecondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
+    // MARK: - Summary (grouped card like Settings)
     
-    private var shareSection: some View {
-        VStack(spacing: 12) {
-            SoberSectionHeader(title: "Share Your Survival", icon: "square.and.arrow.up")
+    private var summarySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SoberSectionHeader(title: "Summary", icon: "doc.text.fill")
             
-            ZStack {
-                MorningReportCardView(saves: saves, streak: currentStreak, date: Date())
-                
-                if !storeManager.isPremium {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.white.opacity(0.8))
-                    VStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                            .font(.title)
-                            .foregroundStyle(SoberTheme.lavenderText)
-                        Text("Premium Feature")
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle().fill(saves > 0 ? SoberTheme.mintCard : SoberTheme.peachCard).frame(width: 40, height: 40)
+                        Image(systemName: saves > 0 ? "shield.fill" : "exclamationmark.triangle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(saves > 0 ? SoberTheme.mintText : SoberTheme.peachText)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Last Night's Damage Report")
                             .font(SoberTheme.headline())
                             .foregroundStyle(SoberTheme.textPrimary)
-                        Text("Upgrade to share your report")
+                        Text(saves > 0
+                             ? "Blocked you \(saves) time\(saves == 1 ? "" : "s"). Nice save. 🛡️"
+                             : "You passed your challenges. Hope it was worth it. 😅")
                             .font(SoberTheme.caption())
                             .foregroundStyle(SoberTheme.textSecondary)
                     }
+                    Spacer()
                 }
+                .padding(.vertical, 4)
             }
-            .frame(height: 200)
-            
-            Button {
-                if storeManager.isPremium { renderAndShare() } else { showPaywall = true }
-            } label: {
-                Text(storeManager.isPremium ? "Share Card" : "⭐️ Upgrade to Share")
-            }
-            .buttonStyle(SoberPrimaryButtonStyle())
+            .soberCard()
         }
     }
+    
+    // MARK: - Share Section
+    
+    private var shareSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SoberSectionHeader(title: "Share Your Survival", icon: "square.and.arrow.up")
+            
+            VStack(spacing: 0) {
+                ZStack {
+                    MorningReportCardView(saves: saves, streak: currentStreak, date: Date())
+                    
+                    if !storeManager.isPremium {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.white.opacity(0.85))
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle().fill(SoberTheme.lavenderCard).frame(width: 48, height: 48)
+                                Image(systemName: "lock.fill").font(.title3).foregroundStyle(SoberTheme.lavenderText)
+                            }
+                            Text("Premium Feature")
+                                .font(SoberTheme.headline())
+                                .foregroundStyle(SoberTheme.textPrimary)
+                            Text("Upgrade to share your report")
+                                .font(SoberTheme.caption())
+                                .foregroundStyle(SoberTheme.textSecondary)
+                        }
+                    }
+                }
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                
+                Button {
+                    if storeManager.isPremium { renderAndShare() } else { showPaywall = true }
+                } label: {
+                    Text(storeManager.isPremium ? "Share Card" : "⭐️ Upgrade to Share")
+                }
+                .buttonStyle(SoberPrimaryButtonStyle())
+                .padding(.top, 12)
+            }
+            .soberCard()
+        }
+    }
+    
+    // MARK: - Logs (grouped card like Settings)
     
     private var logsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -236,12 +274,14 @@ struct MorningReportView: View {
                         )
                     }
                     .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
                     if index < overnightAttempts.count - 1 {
-                        Divider().padding(.leading, 48)
+                        Divider().padding(.leading, 64)
                     }
                 }
             }
-            .soberCard()
+            .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.05), radius: 10, y: 2)
         }
     }
     
