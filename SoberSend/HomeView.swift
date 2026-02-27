@@ -11,26 +11,19 @@ struct HomeView: View {
         ZStack(alignment: .bottom) {
             SoberTheme.background.ignoresSafeArea()
             
-            TabView(selection: $activeTab) {
-                SetupView()
-                    .tag(0)
-                
-                NavigationStack {
-                    MorningReportView()
+            // Content area — NO swipe gesture, tabs switch via taps only
+            Group {
+                switch activeTab {
+                case 0: SetupView()
+                case 1: NavigationStack { MorningReportView() }
+                case 2: NavigationStack { StatsView() }
+                case 3: NavigationStack { SettingsView() }
+                default: SetupView()
                 }
-                .tag(1)
-                
-                NavigationStack {
-                    StatsView()
-                }
-                .tag(2)
-                
-                NavigationStack {
-                    SettingsView()
-                }
-                .tag(3)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Push content above tab bar
+            .padding(.bottom, 56)
             
             SoberTabBar(selectedTab: $activeTab)
         }

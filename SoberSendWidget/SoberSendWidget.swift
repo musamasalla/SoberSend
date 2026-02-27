@@ -17,8 +17,8 @@ struct Provider: TimelineProvider {
         let startMinute = sharedDefaults?.integer(forKey: "lockStartMinute") ?? 0
         let endHour = sharedDefaults?.integer(forKey: "lockEndHour") ?? 7
         let endMinute = sharedDefaults?.integer(forKey: "lockEndMinute") ?? 0
+        let isManuallyActive = sharedDefaults?.bool(forKey: "isManuallyActive") ?? false
         
-        // Evaluate locked state
         let now = Date()
         let calendar = Calendar.current
         
@@ -30,25 +30,17 @@ struct Provider: TimelineProvider {
         let startTimeString = "\(startHStr):\(startMStr)"
         let endTimeString = "\(endHStr):\(endMStr)"
         
-        var isLocked = false
-        if let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
+        var isLocked = isManuallyActive
+        if !isLocked, let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
            let endToday = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: now) {
-            
             if startToday > endToday {
-                // Crosses midnight
-                if now >= startToday || now <= endToday {
-                    isLocked = true
-                }
+                if now >= startToday || now <= endToday { isLocked = true }
             } else {
-                if now >= startToday && now <= endToday {
-                    isLocked = true
-                }
+                if now >= startToday && now <= endToday { isLocked = true }
             }
         }
         
         let entry = SimpleEntry(date: now, isLocked: isLocked, start: startTimeString, end: endTimeString)
-        
-        // Update the widget every hour to check status
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: now)!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
@@ -62,30 +54,41 @@ struct SimpleEntry: TimelineEntry {
     let end: String
 }
 
+// MARK: - Pastel Widget Colors (matching app theme)
+private enum WidgetTheme {
+    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)
+    static let card = Color.white
+    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)
+    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)
+    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)
+    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)
+    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)
+    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58)
+}
+
 struct SoberSendWidgetEntryView : View {
     var entry: Provider.Entry
 
     var body: some View {
-        ZStack {
-            Color.black
-            
-            VStack(spacing: 8) {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(entry.isLocked ? WidgetTheme.mintCard : WidgetTheme.peachCard)
+                    .frame(width: 44, height: 44)
                 Image(systemName: entry.isLocked ? "lock.fill" : "lock.open.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(entry.isLocked ? .red : .green)
-                
-                Text(entry.isLocked ? "LOCKED" : "UNLOCKED")
-                    .font(.footnote)
-                    .bold()
-                    .foregroundColor(.white)
-                
-                Text("\(entry.start) - \(entry.end)")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(entry.isLocked ? WidgetTheme.mintText : WidgetTheme.peachText)
             }
+            
+            Text(entry.isLocked ? "Protected" : "Unprotected")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(WidgetTheme.textPrimary)
+            
+            Text("\(entry.start) – \(entry.end)")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundStyle(WidgetTheme.textSecondary)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -95,7 +98,7 @@ struct SoberSendWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             SoberSendWidgetEntryView(entry: entry)
-                .containerBackground(Color.black, for: .widget)
+                .containerBackground(WidgetTheme.background, for: .widget)
         }
         .configurationDisplayName("SoberSend Status")
         .description("Shows your current lockdown status.")

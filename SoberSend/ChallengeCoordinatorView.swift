@@ -167,8 +167,12 @@ struct ChallengeCoordinatorView: View {
         let attempt = ChallengeAttempt(contactOrApp: contactOrAppName, passed: passed, challengeType: type, attemptNumber: currentStage + 1, unlockGranted: false)
         modelContext.insert(attempt)
         if passed {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
             currentStage += 1
             if currentStage >= sequence.count { attempt.unlockGranted = true; try? modelContext.save(); onResult(true) }
-        } else { try? modelContext.save(); activateLockout() }
+        } else {
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            try? modelContext.save(); activateLockout()
+        }
     }
 }

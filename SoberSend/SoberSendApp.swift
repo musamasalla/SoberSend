@@ -12,8 +12,9 @@ struct SoberSendApp: App {
     @State private var challengeManager = ChallengeManager()
     
     init() {
-        // Register categories immediately on launch
-        NotificationManager().registerNotificationCategories()
+        // Register categories immediately on launch using the shared instance
+        // Note: @State isn't accessible in init(), so we create a one-time instance
+        NotificationManager.registerCategoriesOnce()
     }
     
     // Observe when app returns to foreground to check for pending unlock requests

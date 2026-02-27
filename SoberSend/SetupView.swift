@@ -102,7 +102,9 @@ struct SetupView: View {
     // MARK: - Status Section
     
     private var statusSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let inSchedule = lockdownManager.isCurrentlyInLockedWindow()
+        
+        return VStack(alignment: .leading, spacing: 12) {
             SoberSectionHeader(title: "Status", icon: "shield.fill")
             
             VStack(spacing: 0) {
@@ -121,30 +123,37 @@ struct SetupView: View {
                         .font(SoberTheme.headline(20))
                         .foregroundStyle(SoberTheme.textPrimary)
                     
-                    SoberPill(
-                        text: isActive ? "ACTIVE" : "INACTIVE",
-                        bgColor: isActive ? SoberTheme.mintCard : SoberTheme.peachCard,
-                        fgColor: isActive ? SoberTheme.mintText : SoberTheme.peachText,
-                        small: true
-                    )
+                    if inSchedule && !lockdownManager.isManuallyActivated {
+                        SoberPill(text: "SCHEDULE ACTIVE", bgColor: SoberTheme.blueCard, fgColor: SoberTheme.blueText, small: true)
+                    } else if lockdownManager.isManuallyActivated {
+                        SoberPill(text: "MANUALLY ON", bgColor: SoberTheme.mintCard, fgColor: SoberTheme.mintText, small: true)
+                    } else {
+                        SoberPill(text: "INACTIVE", bgColor: SoberTheme.peachCard, fgColor: SoberTheme.peachText, small: true)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 
                 Divider().padding(.horizontal, -16)
                 
-                // Toggle row
+                // Manual override toggle
                 HStack {
                     Image(systemName: "bolt.fill")
                         .foregroundStyle(SoberTheme.lavenderText)
-                    Text("Activate Now")
-                        .font(SoberTheme.body())
-                        .foregroundStyle(SoberTheme.textPrimary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Manual Override")
+                            .font(SoberTheme.body())
+                            .foregroundStyle(SoberTheme.textPrimary)
+                        Text(inSchedule ? "Schedule is also protecting you" : "Turn on protection right now")
+                            .font(SoberTheme.caption(11))
+                            .foregroundStyle(SoberTheme.textSecondary)
+                    }
                     Spacer()
                     Toggle("", isOn: Binding(
-                        get: { isActive },
+                        get: { lockdownManager.isManuallyActivated },
                         set: { val in
                             lockdownManager.isManuallyActivated = val
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         }
                     ))
                     .labelsHidden()

@@ -119,6 +119,7 @@ struct SoberPrimaryButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .sensoryFeedback(.impact(weight: .medium), trigger: configuration.isPressed)
     }
 }
 
@@ -134,6 +135,7 @@ struct SoberSecondaryButtonStyle: ButtonStyle {
             .background(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.3), lineWidth: 1.5))
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .sensoryFeedback(.impact(weight: .light), trigger: configuration.isPressed)
     }
 }
 
@@ -213,6 +215,7 @@ struct SoberTabBar: View {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         selectedTab = index
                     }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
                     VStack(spacing: 4) {
                         ZStack {

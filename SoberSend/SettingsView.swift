@@ -183,7 +183,7 @@ struct SettingsView: View {
                     HStack {
                         HStack(spacing: 10) {
                             ZStack {
-                                Circle().fill(SoberTheme.creamCard).frame(width: 36, height: 36)
+                                Circle().fill(SoberTheme.creamCard).frame(width: 40, height: 40)
                                 Image(systemName: "sunrise.fill").font(.system(size: 14)).foregroundStyle(SoberTheme.creamText)
                             }
                             Text("Morning Report").font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
@@ -199,7 +199,7 @@ struct SettingsView: View {
                 } else {
                     HStack(spacing: 10) {
                         ZStack {
-                            Circle().fill(SoberTheme.peachCard).frame(width: 36, height: 36)
+                            Circle().fill(SoberTheme.peachCard).frame(width: 40, height: 40)
                             Image(systemName: "bell.slash.fill").font(.system(size: 14)).foregroundStyle(SoberTheme.peachText)
                         }
                         Text("Notifications").font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
@@ -234,10 +234,10 @@ struct SettingsView: View {
                 Divider().padding(.leading, 52)
                 HStack(spacing: 10) {
                     ZStack {
-                        Circle().fill(Color.gray.opacity(0.12)).frame(width: 36, height: 36)
+                        Circle().fill(Color.gray.opacity(0.12)).frame(width: 40, height: 40)
                         Image(systemName: "number").font(.system(size: 14)).foregroundStyle(SoberTheme.textSecondary)
                     }
-                    Text("Version 1.0.0").font(SoberTheme.body()).foregroundStyle(SoberTheme.textSecondary)
+                    Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")").font(SoberTheme.body()).foregroundStyle(SoberTheme.textSecondary)
                     Spacer()
                 }
                 .padding(.vertical, 10)
@@ -251,8 +251,8 @@ struct SettingsView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle().fill(iconBg).frame(width: 36, height: 36)
-                    Image(systemName: icon).font(.system(size: 14)).foregroundStyle(iconFg)
+                    Circle().fill(iconBg).frame(width: 40, height: 40)
+                    Image(systemName: icon).font(.system(size: 16)).foregroundStyle(iconFg)
                 }
                 Text(title).font(SoberTheme.body()).foregroundStyle(SoberTheme.textPrimary)
                 Spacer()

@@ -101,6 +101,14 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().setNotificationCategories([unlockCategory])
     }
     
+    /// Static version for use in App.init() where @State isn't available
+    static func registerCategoriesOnce() {
+        let challengeAction = UNNotificationAction(identifier: "TAKE_CHALLENGE", title: "Take Challenge", options: [.foreground])
+        let dismissAction = UNNotificationAction(identifier: "DISMISS", title: "Dismiss", options: [.destructive])
+        let unlockCategory = UNNotificationCategory(identifier: "APP_UNLOCK", actions: [challengeAction, dismissAction], intentIdentifiers: [], options: [.customDismissAction])
+        UNUserNotificationCenter.current().setNotificationCategories([unlockCategory])
+    }
+    
     // MARK: - UNUserNotificationCenterDelegate
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
