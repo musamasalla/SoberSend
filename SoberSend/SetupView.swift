@@ -1,6 +1,7 @@
 import SwiftUI
 import FamilyControls
 import SwiftData
+import ContactsUI
 
 struct SetupView: View {
     @Environment(LockdownManager.self) private var lockdownManager
@@ -9,11 +10,16 @@ struct SetupView: View {
     @Query private var contacts: [LockedContact]
     
     @State private var showAppPicker = false
+    @State private var showContactPicker = false
     @State private var showPaywall = false
     @State private var showIntentions = false
     @State private var challengingContact: LockedContact? = nil
+    @State private var wasManuallyActiveBeforePicker = false
     
     @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var soberNote: String = ""
+    
+    private let freeAppLimit = 1
+    private let freeContactLimit = 1
     
     private var isActive: Bool { lockdownManager.isAppBlockingActive() }
     
@@ -47,6 +53,37 @@ struct SetupView: View {
                 }
             }
             .familyActivityPicker(isPresented: $showAppPicker, selection: $lm.selectionToDiscourage)
+            .onChange(of: showAppPicker) { _, presented in
+                if !presented {
+                    // Enforce free app limit
+                    if !storeManager.isPremium {
+                        let appCount = lockdownManager.selectionToDiscourage.applicationTokens.count
+                        if appCount > freeAppLimit {
+                            let allowed = Set(lockdownManager.selectionToDiscourage.applicationTokens.prefix(freeAppLimit))
+                            lockdownManager.selectionToDiscourage.applicationTokens = allowed
+                            showPaywall = true
+                        }
+                    }
+                    // Re-activate if it was active before opening picker
+                    if wasManuallyActiveBeforePicker {
+                        lockdownManager.isManuallyActivated = true
+                        wasManuallyActiveBeforePicker = false
+                    }
+                }
+            }
+            .sheet(isPresented: $showContactPicker) {
+                ContactPickerView(onSelect: { contact in
+                    // Enforce free contact limit
+                    if !storeManager.isPremium && contacts.count >= freeContactLimit {
+                        showPaywall = true
+                    } else {
+                        let displayName = CNContactFormatter.string(from: contact, style: .fullName) ?? "Unknown Contact"
+                        let newContact = LockedContact(contactID: contact.identifier, displayName: displayName)
+                        modelContext.insert(newContact)
+                        try? modelContext.save()
+                    }
+                })
+            }
             .sheet(isPresented: $showPaywall) { PaywallView() }
             .sheet(isPresented: $showIntentions) { IntentionsView() }
             .fullScreenCover(item: $challengingContact) { contact in
@@ -132,7 +169,7 @@ struct SetupView: View {
                         iconBg: SoberTheme.lavenderCard,
                         iconFg: SoberTheme.lavenderText,
                         title: "Select Apps to Lock",
-                        subtitle: "Free: 1 max"
+                        subtitle: storeManager.isPremium ? "Unlimited" : "Free: \(freeAppLimit) max"
                     )
                 }
                 .buttonStyle(.plain)
@@ -140,15 +177,13 @@ struct SetupView: View {
                 Divider().padding(.leading, 52)
                 
                 // Contacts row
-                NavigationLink {
-                    ContactPickerView()
-                } label: {
+                Button { handleContactSelection() } label: {
                     SoberRow(
                         icon: "person.crop.circle.badge.plus",
                         iconBg: SoberTheme.blueCard,
                         iconFg: SoberTheme.blueText,
                         title: "Add Contact to Lock",
-                        subtitle: "Free: 1 max"
+                        subtitle: storeManager.isPremium ? "Unlimited" : "Free: \(freeContactLimit) max"
                     )
                 }
                 .buttonStyle(.plain)
@@ -263,10 +298,19 @@ struct SetupView: View {
     
     private func handleAppSelection() {
         if isActive {
+            wasManuallyActiveBeforePicker = lockdownManager.isManuallyActivated
             lockdownManager.isManuallyActivated = false
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { showAppPicker = true }
         } else {
             showAppPicker = true
+        }
+    }
+    
+    private func handleContactSelection() {
+        if !storeManager.isPremium && contacts.count >= freeContactLimit {
+            showPaywall = true
+        } else {
+            showContactPicker = true
         }
     }
     
