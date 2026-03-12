@@ -39,7 +39,6 @@ struct SetupView: View {
             }
             .background(SoberTheme.background.ignoresSafeArea())
             .navigationTitle("SoberSend")
-            .preferredColorScheme(.light)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showIntentions = true } label: {

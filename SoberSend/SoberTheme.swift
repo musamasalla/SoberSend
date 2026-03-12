@@ -1,39 +1,96 @@
 import SwiftUI
 
-// MARK: - SoberSend Light Pastel Design System
-// Clean, uniform. Settings page is the gold standard for card grouping.
+// MARK: - SoberSend Adaptive Design System
+// Supports light + dark mode via UIColor trait collections.
+// Settings page is the gold standard for card grouping.
 
 enum SoberTheme {
     
+    // MARK: - Adaptive Color Helper
+    
+    private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark : light })
+    }
+    
     // MARK: - Core Colors
     
-    /// Page background — pale ice-blue
-    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)
-    /// Card surface — pure white
-    static let card = Color.white
-    /// Primary text — near-black
-    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)
-    /// Secondary text — medium gray
-    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58)
-    /// CTA / primary button — black
-    static let ctaBlack = Color(red: 0.10, green: 0.10, blue: 0.10)
+    /// Page background
+    static let background = adaptive(
+        light: UIColor(red: 0.92, green: 0.96, blue: 0.98, alpha: 1),
+        dark:  UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1)  // #121214
+    )
+    /// Card surface
+    static let card = adaptive(
+        light: .white,
+        dark:  UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1) // #1C1C1E
+    )
+    /// Primary text
+    static let textPrimary = adaptive(
+        light: UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: 1),
+        dark:  UIColor(white: 0.95, alpha: 1)
+    )
+    /// Secondary text
+    static let textSecondary = adaptive(
+        light: UIColor(red: 0.56, green: 0.56, blue: 0.58, alpha: 1),
+        dark:  UIColor(white: 0.55, alpha: 1)
+    )
+    /// CTA button — inverts for dark mode
+    static let ctaBlack = adaptive(
+        light: UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: 1),
+        dark:  UIColor(white: 0.95, alpha: 1)
+    )
+    /// CTA button text — inverts for dark mode
+    static let ctaForeground = adaptive(
+        light: .white,
+        dark:  UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1)
+    )
     
-    // MARK: - Pastel Accents
+    // MARK: - Pastel Accents (slightly deepened in dark)
     
-    static let lavenderCard = Color(red: 0.91, green: 0.88, blue: 0.97)
-    static let lavenderText = Color(red: 0.45, green: 0.35, blue: 0.70)
+    static let lavenderCard = adaptive(
+        light: UIColor(red: 0.91, green: 0.88, blue: 0.97, alpha: 1),
+        dark:  UIColor(red: 0.22, green: 0.18, blue: 0.35, alpha: 1)
+    )
+    static let lavenderText = adaptive(
+        light: UIColor(red: 0.45, green: 0.35, blue: 0.70, alpha: 1),
+        dark:  UIColor(red: 0.70, green: 0.62, blue: 0.92, alpha: 1)
+    )
     
-    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)
-    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)
+    static let mintCard = adaptive(
+        light: UIColor(red: 0.83, green: 0.96, blue: 0.91, alpha: 1),
+        dark:  UIColor(red: 0.12, green: 0.24, blue: 0.18, alpha: 1)
+    )
+    static let mintText = adaptive(
+        light: UIColor(red: 0.18, green: 0.55, blue: 0.38, alpha: 1),
+        dark:  UIColor(red: 0.40, green: 0.80, blue: 0.58, alpha: 1)
+    )
     
-    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)
-    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)
+    static let peachCard = adaptive(
+        light: UIColor(red: 1.00, green: 0.88, blue: 0.86, alpha: 1),
+        dark:  UIColor(red: 0.30, green: 0.14, blue: 0.12, alpha: 1)
+    )
+    static let peachText = adaptive(
+        light: UIColor(red: 0.70, green: 0.30, blue: 0.25, alpha: 1),
+        dark:  UIColor(red: 0.92, green: 0.50, blue: 0.42, alpha: 1)
+    )
     
-    static let creamCard = Color(red: 1.00, green: 0.97, blue: 0.91)
-    static let creamText = Color(red: 0.60, green: 0.50, blue: 0.25)
+    static let creamCard = adaptive(
+        light: UIColor(red: 1.00, green: 0.97, blue: 0.91, alpha: 1),
+        dark:  UIColor(red: 0.25, green: 0.22, blue: 0.12, alpha: 1)
+    )
+    static let creamText = adaptive(
+        light: UIColor(red: 0.60, green: 0.50, blue: 0.25, alpha: 1),
+        dark:  UIColor(red: 0.85, green: 0.75, blue: 0.42, alpha: 1)
+    )
     
-    static let blueCard = Color(red: 0.85, green: 0.92, blue: 0.98)
-    static let blueText = Color(red: 0.20, green: 0.45, blue: 0.70)
+    static let blueCard = adaptive(
+        light: UIColor(red: 0.85, green: 0.92, blue: 0.98, alpha: 1),
+        dark:  UIColor(red: 0.12, green: 0.18, blue: 0.28, alpha: 1)
+    )
+    static let blueText = adaptive(
+        light: UIColor(red: 0.20, green: 0.45, blue: 0.70, alpha: 1),
+        dark:  UIColor(red: 0.45, green: 0.70, blue: 0.95, alpha: 1)
+    )
     
     // MARK: - Fonts (Rounded)
     
@@ -51,6 +108,28 @@ enum SoberTheme {
     }
     static func mono(_ size: CGFloat = 28) -> Font {
         .system(size: size, weight: .bold, design: .monospaced)
+    }
+}
+
+// MARK: - Appearance Mode
+
+enum AppearanceMode: Int, CaseIterable {
+    case system = 0, light = 1, dark = 2
+    
+    var label: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+    
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
     }
 }
 
@@ -112,7 +191,7 @@ struct SoberPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SoberTheme.headline())
-            .foregroundStyle(.white)
+            .foregroundStyle(SoberTheme.ctaForeground)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(color, in: RoundedRectangle(cornerRadius: 16))

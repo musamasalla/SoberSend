@@ -38,6 +38,12 @@ struct SoberSendApp: App {
         }
     }()
 
+    @AppStorage("appearanceMode", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var appearanceModeRaw: Int = 0
+    
+    private var appearanceMode: AppearanceMode {
+        AppearanceMode(rawValue: appearanceModeRaw) ?? .system
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -46,6 +52,7 @@ struct SoberSendApp: App {
                 .environment(lockdownManager)
                 .environment(storeManager)
                 .environment(challengeManager)
+                .preferredColorScheme(appearanceMode.colorScheme)
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         checkForPendingUnlockRequest()

@@ -20,7 +20,6 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .always))
             .animation(.easeInOut, value: currentStep)
         }
-        .preferredColorScheme(.light)
     }
 }
 

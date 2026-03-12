@@ -128,7 +128,6 @@ struct MorningReportView: View {
         }
         .background(SoberTheme.background.ignoresSafeArea())
         .navigationTitle("Morning Report")
-        .preferredColorScheme(.light)
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .sheet(isPresented: $isShowingShareSheet) {
             if let img = shareImage {
@@ -252,9 +251,9 @@ struct MorningReportView: View {
                         ZStack {
                             Circle()
                                 .fill(attempt.unlockGranted ? SoberTheme.peachCard : SoberTheme.mintCard)
-                                .frame(width: 36, height: 36)
+                                .frame(width: 40, height: 40)
                             Image(systemName: attempt.unlockGranted ? "exclamationmark.triangle.fill" : "shield.fill")
-                                .font(.system(size: 14))
+                                .font(.system(size: 16))
                                 .foregroundStyle(attempt.unlockGranted ? SoberTheme.peachText : SoberTheme.mintText)
                         }
                         VStack(alignment: .leading, spacing: 2) {

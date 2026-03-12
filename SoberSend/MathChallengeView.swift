@@ -9,44 +9,74 @@ struct MathChallengeView: View {
     @State private var operatorSymbol: String = "+"
     @State private var correctAnswer: Int = 0
     @State private var userAnswer: String = ""
-    
     @State private var attemptsLeft = 3
+    @State private var showWrong = false
     
     var body: some View {
-        VStack(spacing: 30) {
-            Text("Math Challenge")
-                .font(.largeTitle)
-                .bold()
-                .padding(.top, 40)
+        VStack(spacing: 24) {
+            Spacer()
             
-            Text("Attempts left: \(attemptsLeft)")
-                .foregroundColor(attemptsLeft == 1 ? .red : .gray)
+            // Challenge icon
+            ZStack {
+                Circle()
+                    .fill(SoberTheme.lavenderCard)
+                    .frame(width: 80, height: 80)
+                Image(systemName: "function")
+                    .font(.system(size: 36, weight: .semibold))
+                    .foregroundStyle(SoberTheme.lavenderText)
+            }
+            
+            Text("Math Challenge")
+                .font(SoberTheme.title(28))
+                .foregroundStyle(SoberTheme.textPrimary)
+            
+            // Attempts indicator
+            HStack(spacing: 6) {
+                ForEach(0..<3, id: \.self) { i in
+                    Circle()
+                        .fill(i < attemptsLeft ? SoberTheme.mintCard : SoberTheme.peachCard)
+                        .frame(width: 10, height: 10)
+                }
+                Text("\(attemptsLeft) left")
+                    .font(SoberTheme.caption(11))
+                    .foregroundStyle(attemptsLeft == 1 ? SoberTheme.peachText : SoberTheme.textSecondary)
+            }
             
             Spacer()
             
-            HStack {
-                Text("\(num1) \(operatorSymbol) \(num2) = ")
-                TextField("?", text: $userAnswer)
+            // Math problem display
+            VStack(spacing: 16) {
+                Text("\(num1) \(operatorSymbol) \(num2) = ?")
+                    .font(SoberTheme.mono(40))
+                    .foregroundStyle(SoberTheme.lavenderText)
+                
+                TextField("Your answer", text: $userAnswer)
                     .keyboardType(.numberPad)
-                    .frame(width: 100)
+                    .font(SoberTheme.mono(28))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(SoberTheme.textPrimary)
+                    .padding()
+                    .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: showWrong ? SoberTheme.peachCard : .black.opacity(0.06), radius: 8)
+                    .padding(.horizontal, 40)
+                
+                if showWrong {
+                    Text("Wrong answer. Try again.")
+                        .font(SoberTheme.body())
+                        .fontWeight(.semibold)
+                        .foregroundStyle(SoberTheme.peachText)
+                }
             }
-            .font(.system(size: 40, weight: .bold, design: .monospaced))
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
             
             Spacer()
             
             Button(action: checkAnswer) {
                 Text("Submit")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 16))
             }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 50)
+            .buttonStyle(SoberPrimaryButtonStyle(color: userAnswer.isEmpty ? .gray.opacity(0.3) : SoberTheme.ctaBlack))
             .disabled(userAnswer.isEmpty)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
         }
         .onAppear(perform: generateProblem)
     }
@@ -82,11 +112,15 @@ struct MathChallengeView: View {
         } else {
             attemptsLeft -= 1
             if attemptsLeft <= 0 {
+                HapticManager.shared.notification(type: .error)
                 onComplete(false)
             } else {
                 HapticManager.shared.notification(type: .error)
                 SoundManager.shared.playError()
-                generateProblem() // Make it slightly harder/new numbers
+                showWrong = true
+                userAnswer = ""
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { showWrong = false }
+                generateProblem()
             }
         }
     }

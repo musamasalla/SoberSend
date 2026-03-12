@@ -22,6 +22,8 @@ struct HomeView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.15), value: activeTab)
             // Push content above tab bar
             .padding(.bottom, 56)
             

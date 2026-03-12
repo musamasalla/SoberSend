@@ -102,7 +102,6 @@ struct IntentionsView: View {
             }
             .onTapGesture { isFocused = false }
         }
-        .preferredColorScheme(.light)
         .onAppear { intentionText = globalSoberNote }
         .fullScreenCover(item: $challengingContact) { contact in
             ChallengeCoordinatorView(contactOrAppName: contact.displayName, difficulty: contact.difficulty, soberNote: contact.soberNote) { passed in

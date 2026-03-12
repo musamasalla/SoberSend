@@ -74,7 +74,6 @@ struct PaywallView: View {
             if didPurchase { successOverlay }
         }
         .background(SoberTheme.background)
-        .preferredColorScheme(.light)
         .onAppear {
             if selectedProductID == nil { selectedProductID = yearlyID }
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) { shieldGlow = true }
@@ -181,12 +180,12 @@ struct PaywallView: View {
         VStack(spacing: 12) {
             Button { Task { await handlePurchase() } } label: {
                 ZStack {
-                    if isPurchasing { ProgressView().tint(.white) }
+                    if isPurchasing { ProgressView().tint(SoberTheme.ctaForeground) }
                     else {
                         HStack(spacing: 8) {
                             Image(systemName: selectedProduct?.id == yearlyID && yearlyHasTrial ? "gift.fill" : "lock.open.fill")
                             Text(ctaLabel).font(SoberTheme.headline())
-                        }.foregroundStyle(.white)
+                        }.foregroundStyle(SoberTheme.ctaForeground)
                     }
                 }
                 .frame(maxWidth: .infinity).frame(height: 56)
@@ -231,7 +230,7 @@ struct PaywallView: View {
     // MARK: - Success Overlay
     private var successOverlay: some View {
         ZStack {
-            Color.white.opacity(0.85).ignoresSafeArea()
+            SoberTheme.background.opacity(0.92).ignoresSafeArea()
             VStack(spacing: 20) {
                 ZStack {
                     Circle().fill(SoberTheme.mintCard).frame(width: 120, height: 120)

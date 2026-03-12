@@ -74,7 +74,6 @@ struct EmergencyUnlockView: View {
                 }
             }
         }
-        .preferredColorScheme(.light)
     }
     
     private func triggerUnlock() {

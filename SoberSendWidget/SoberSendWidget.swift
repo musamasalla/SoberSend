@@ -54,16 +54,41 @@ struct SimpleEntry: TimelineEntry {
     let end: String
 }
 
-// MARK: - Pastel Widget Colors (matching app theme)
+// MARK: - Adaptive Widget Colors (matches app theme, auto light/dark)
 private enum WidgetTheme {
-    static let background = Color(red: 0.92, green: 0.96, blue: 0.98)
-    static let card = Color.white
-    static let mintCard = Color(red: 0.83, green: 0.96, blue: 0.91)
-    static let mintText = Color(red: 0.18, green: 0.55, blue: 0.38)
-    static let peachCard = Color(red: 1.00, green: 0.88, blue: 0.86)
-    static let peachText = Color(red: 0.70, green: 0.30, blue: 0.25)
-    static let textPrimary = Color(red: 0.10, green: 0.10, blue: 0.10)
-    static let textSecondary = Color(red: 0.56, green: 0.56, blue: 0.58)
+    private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark : light })
+    }
+    
+    static let background = adaptive(
+        light: UIColor(red: 0.92, green: 0.96, blue: 0.98, alpha: 1),
+        dark:  UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1)
+    )
+    static let card = adaptive(light: .white, dark: UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1))
+    static let mintCard = adaptive(
+        light: UIColor(red: 0.83, green: 0.96, blue: 0.91, alpha: 1),
+        dark:  UIColor(red: 0.12, green: 0.24, blue: 0.18, alpha: 1)
+    )
+    static let mintText = adaptive(
+        light: UIColor(red: 0.18, green: 0.55, blue: 0.38, alpha: 1),
+        dark:  UIColor(red: 0.40, green: 0.80, blue: 0.58, alpha: 1)
+    )
+    static let peachCard = adaptive(
+        light: UIColor(red: 1.00, green: 0.88, blue: 0.86, alpha: 1),
+        dark:  UIColor(red: 0.30, green: 0.14, blue: 0.12, alpha: 1)
+    )
+    static let peachText = adaptive(
+        light: UIColor(red: 0.70, green: 0.30, blue: 0.25, alpha: 1),
+        dark:  UIColor(red: 0.92, green: 0.50, blue: 0.42, alpha: 1)
+    )
+    static let textPrimary = adaptive(
+        light: UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: 1),
+        dark:  UIColor(white: 0.95, alpha: 1)
+    )
+    static let textSecondary = adaptive(
+        light: UIColor(red: 0.56, green: 0.56, blue: 0.58, alpha: 1),
+        dark:  UIColor(white: 0.55, alpha: 1)
+    )
 }
 
 struct SoberSendWidgetEntryView : View {

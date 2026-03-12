@@ -87,7 +87,6 @@ struct ChallengeCoordinatorView: View {
             }
             .navigationTitle("Unlocking \(contactOrAppName)")
             .navigationBarTitleDisplayMode(.inline)
-            .preferredColorScheme(.light)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Emergency") { showEmergencyUnlock = true }

@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var restoreMessage = ""
     @State private var showPaywall = false
     @AppStorage("morningReportEnabled", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var morningReportEnabled: Bool = true
+    @AppStorage("appearanceMode", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var appearanceModeRaw: Int = 0
     
     let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
     private let minimumGapMinutes = 60
@@ -22,6 +23,7 @@ struct SettingsView: View {
                 premiumSection
                 scheduleSection
                 notificationsSection
+                appearanceSection
                 aboutSection
                 Spacer(minLength: 100)
             }
@@ -30,7 +32,6 @@ struct SettingsView: View {
         }
         .background(SoberTheme.background.ignoresSafeArea())
         .navigationTitle("Settings")
-        .preferredColorScheme(.light)
         .onAppear {
             startTime = Calendar.current.date(bySettingHour: lockdownManager.lockStartHour, minute: lockdownManager.lockStartMinute, second: 0, of: Date()) ?? Date()
             endTime = Calendar.current.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: Date()) ?? Date()
@@ -217,6 +218,36 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - Appearance
+    
+    private var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SoberSectionHeader(title: "Appearance", icon: "paintbrush.fill")
+            
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle().fill(SoberTheme.creamCard).frame(width: 40, height: 40)
+                        Image(systemName: "moon.stars.fill").font(.system(size: 16, weight: .semibold)).foregroundStyle(SoberTheme.creamText)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Theme").font(SoberTheme.headline()).foregroundStyle(SoberTheme.textPrimary)
+                        Text("Choose how SoberSend looks").font(SoberTheme.caption()).foregroundStyle(SoberTheme.textSecondary)
+                    }
+                    Spacer()
+                }
+                
+                Picker("Appearance", selection: $appearanceModeRaw) {
+                    ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                        Text(mode.label).tag(mode.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            .soberCard()
+        }
+    }
+    
     // MARK: - About
     
     private var aboutSection: some View {
@@ -234,8 +265,8 @@ struct SettingsView: View {
                 Divider().padding(.leading, 52)
                 HStack(spacing: 10) {
                     ZStack {
-                        Circle().fill(Color.gray.opacity(0.12)).frame(width: 40, height: 40)
-                        Image(systemName: "number").font(.system(size: 14)).foregroundStyle(SoberTheme.textSecondary)
+                        Circle().fill(SoberTheme.blueCard).frame(width: 40, height: 40)
+                        Image(systemName: "number").font(.system(size: 16)).foregroundStyle(SoberTheme.blueText)
                     }
                     Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")").font(SoberTheme.body()).foregroundStyle(SoberTheme.textSecondary)
                     Spacer()
