@@ -74,15 +74,16 @@ class LockdownManager {
     init() {
         self.isManuallyActivated = sharedDefaults.bool(forKey: "isManuallyActive")
         self.activeDaysMask = sharedDefaults.object(forKey: "activeDaysMask") == nil ? 127 : sharedDefaults.integer(forKey: "activeDaysMask")
-        
+
         self.lockStartHour = sharedDefaults.object(forKey: "lockStartHour") == nil ? 22 : sharedDefaults.integer(forKey: "lockStartHour")
         self.lockStartMinute = sharedDefaults.integer(forKey: "lockStartMinute")
         self.lockEndHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
         self.lockEndMinute = sharedDefaults.integer(forKey: "lockEndMinute")
-        
+
         loadSelection()
         checkAuthorization()
-        
+        refreshLiveActivityState()
+
         // Load bypass if still valid
         let bypassTimestamp = sharedDefaults.double(forKey: bypassKey)
         if bypassTimestamp > 0 {
@@ -125,6 +126,7 @@ class LockdownManager {
     }
 
     func setShieldRestrictions() {
+        refreshLiveActivityState()
         if isAppBlockingActive() {
             store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
             store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
@@ -235,9 +237,15 @@ class LockdownManager {
         }
     }
 
+    // MARK: - Live Activity Tracking
+    var isBlockingForLiveActivity: Bool = false
+
+    private func refreshLiveActivityState() {
+        isBlockingForLiveActivity = isAppBlockingActive()
+    }
+
     // MARK: - Window Check
     public func isAppBlockingActive() -> Bool {
-        // If bypass is active, never block
         if isBypassActive { return false }
         return isCurrentlyInLockedWindow() || isManuallyActivated
     }

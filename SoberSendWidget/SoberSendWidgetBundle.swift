@@ -1,10 +1,4 @@
-//
-//  SoberSendWidgetBundle.swift
-//  SoberSendWidget
-//
-//  Created by Musa Masalla on 2026/02/26.
-//
-
+import ActivityKit
 import WidgetKit
 import SwiftUI
 
@@ -12,5 +6,8 @@ import SwiftUI
 struct SoberSendWidgetBundle: WidgetBundle {
     var body: some Widget {
         SoberSendWidget()
+        if #available(iOS 16.1, *) {
+            LockdownLiveActivity()
+        }
     }
 }

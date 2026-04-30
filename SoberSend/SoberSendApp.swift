@@ -1,25 +1,28 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import ActivityKit
+import FamilyControls
+import ManagedSettings
 
 @main
 struct SoberSendApp: App {
-    
+
     @State private var emergencyManager = EmergencyUnlockManager()
     @State private var notificationManager = NotificationManager()
     @State private var lockdownManager = LockdownManager()
     @State private var storeManager = StoreManager()
     @State private var challengeManager = ChallengeManager()
-    
+
+    private let notificationDelegate = AppNotificationDelegate.shared
+
     init() {
-        // Register categories immediately on launch using the shared instance
-        // Note: @State isn't accessible in init(), so we create a one-time instance
+        UNUserNotificationCenter.current().delegate = notificationDelegate
         NotificationManager.registerCategoriesOnce()
     }
-    
-    // Observe when app returns to foreground to check for pending unlock requests
+
     @Environment(\.scenePhase) private var scenePhase
-    
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             LockedContact.self,
@@ -30,8 +33,6 @@ struct SoberSendApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            // Graceful fallback: log the error and use an in-memory store
-            // This avoids a crash on schema migration during app updates
             print("⚠️ SoberSend: Could not create persistent ModelContainer: \(error). Falling back to in-memory store.")
             let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             return try! ModelContainer(for: schema, configurations: [fallbackConfig])
@@ -39,11 +40,11 @@ struct SoberSendApp: App {
     }()
 
     @AppStorage("appearanceMode", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var appearanceModeRaw: Int = 0
-    
+
     private var appearanceMode: AppearanceMode {
         AppearanceMode(rawValue: appearanceModeRaw) ?? .system
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -53,25 +54,76 @@ struct SoberSendApp: App {
                 .environment(storeManager)
                 .environment(challengeManager)
                 .preferredColorScheme(appearanceMode.colorScheme)
+                .onAppear {
+                    handleNotificationDeepLinks()
+                }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         checkForPendingUnlockRequest()
+                        startLiveActivityIfNeeded()
+                    }
+                }
+                .onChange(of: lockdownManager.isBlockingForLiveActivity) { _, isBlocking in
+                    if isBlocking {
+                        startLiveActivityIfNeeded()
+                    } else {
+                        Task { @MainActor in
+                            await LiveActivityManager.shared.endLockdownActivity()
+                        }
                     }
                 }
         }
         .modelContainer(sharedModelContainer)
         .environment(emergencyManager)
     }
-    
-    // MARK: - App Lifecycle
+
     private func checkForPendingUnlockRequest() {
-        // When app becomes active, check if the ShieldAction set the unlock flag
-        // If so, send the unlock notification (which ContentView observes via AppStorage)
         guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
         if shared.bool(forKey: "isRequestingAppUnlock") {
-            // Flag is already set — ContentView will pick it up and show the challenge
-            // Register notification categories so the notification actions work
             notificationManager.registerNotificationCategories()
+        }
+    }
+
+    private func handleNotificationDeepLinks() {
+        guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
+        shared.set(false, forKey: "notificationDeepLink")
+        shared.set(false, forKey: "lockoutExpiredDeepLink")
+        shared.set(false, forKey: "morningReportDeepLink")
+    }
+
+    private func startLiveActivityIfNeeded() {
+        guard lockdownManager.isAppBlockingActive() else {
+            Task { @MainActor in
+                await LiveActivityManager.shared.endLockdownActivity()
+            }
+            return
+        }
+
+        let startMinuteStr = String(format: "%02d", lockdownManager.lockStartMinute)
+        let endMinuteStr = String(format: "%02d", lockdownManager.lockEndMinute)
+
+        let startTime = "\(lockdownManager.lockStartHour):\(startMinuteStr)"
+        let endTime = "\(lockdownManager.lockEndHour):\(endMinuteStr)"
+
+        let calendar = Calendar.current
+        let now = Date()
+        let lockEndTime: Date
+        if let endToday = calendar.date(bySettingHour: lockdownManager.lockEndHour, minute: lockdownManager.lockEndMinute, second: 0, of: now) {
+            lockEndTime = endToday > now ? endToday : calendar.date(byAdding: .day, value: 1, to: endToday) ?? endToday
+        } else {
+            lockEndTime = calendar.date(byAdding: .hour, value: 8, to: now) ?? now
+        }
+
+        let lockedCount = lockdownManager.selectionToDiscourage.applicationTokens.count
+
+        Task { @MainActor in
+            LiveActivityManager.shared.startLockdownActivity(
+                startTime: startTime,
+                endTime: endTime,
+                lockEndTime: lockEndTime,
+                lockedAppsCount: lockedCount,
+                streakNights: 0
+            )
         }
     }
 }

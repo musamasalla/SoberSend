@@ -4,14 +4,16 @@ import FamilyControls
 struct HomeView: View {
     @Environment(LockdownManager.self) private var lockdownManager
     @Environment(StoreManager.self) private var storeManager
-    
+
     @State private var activeTab = 0
-    
+    @Namespace private var tabTransition
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ZStack(alignment: .bottom) {
             SoberTheme.background.ignoresSafeArea()
-            
-            // Content area — NO swipe gesture, tabs switch via taps only
+
             Group {
                 switch activeTab {
                 case 0: SetupView()
@@ -22,13 +24,12 @@ struct HomeView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .matchedGeometryEffect(id: "tabContent", in: tabTransition, isSource: true)
             .transition(.opacity)
-            .animation(.easeInOut(duration: 0.15), value: activeTab)
-            // Push content above tab bar
+            .animation(reduceMotion ? nil : .spring(duration: 0.35, bounce: 0.2), value: activeTab)
             .padding(.bottom, 56)
-            
+
             SoberTabBar(selectedTab: $activeTab)
         }
-        .preferredColorScheme(.light)
     }
 }
