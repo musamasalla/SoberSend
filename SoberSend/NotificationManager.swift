@@ -8,7 +8,6 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     override init() {
         super.init()
-        UNUserNotificationCenter.current().delegate = self
         checkAuthorization()
     }
 

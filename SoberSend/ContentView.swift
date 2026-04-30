@@ -13,6 +13,7 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var hasCompletedOnboarding: Bool = false
     @AppStorage("isRequestingAppUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingAppUnlock: Bool = false
     @AppStorage("isRequestingEmergencyUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingEmergencyUnlock: Bool = false
+    @State private var showLockoutExpiredChallenge: Bool = false
     @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var globalSoberNote: String = ""
     
     // Inject Managers for children
@@ -37,17 +38,31 @@ struct ContentView: View {
         .environment(emergencyManager)
         .fullScreenCover(isPresented: $isRequestingAppUnlock) {
             ChallengeCoordinatorView(
-                contactOrAppName: "Restricted App", 
-                difficulty: .expert, 
+                contactOrAppName: "Restricted App",
+                difficulty: .expert,
                 soberNote: globalSoberNote.isEmpty ? nil : globalSoberNote
             ) { passed in
                 if passed {
-                    // Temporarily lift restrictions via the manager
                     lockdownManager.activateBypass(duration: 300)
                 }
-                
-                // Clear the flag to dismiss the sheet
                 isRequestingAppUnlock = false
+            }
+            .environment(lockdownManager)
+            .environment(challengeManager)
+            .environment(storeManager)
+            .environment(notificationManager)
+            .environment(emergencyManager)
+        }
+        .fullScreenCover(isPresented: $showLockoutExpiredChallenge) {
+            ChallengeCoordinatorView(
+                contactOrAppName: "Restricted App",
+                difficulty: .medium,
+                soberNote: globalSoberNote.isEmpty ? nil : globalSoberNote
+            ) { passed in
+                if passed {
+                    lockdownManager.activateBypass(duration: 300)
+                }
+                showLockoutExpiredChallenge = false
             }
             .environment(lockdownManager)
             .environment(challengeManager)
@@ -64,8 +79,13 @@ struct ContentView: View {
                 .environment(emergencyManager)
         }
         .onAppear {
-            // Check flags immediately in case app was killed
             if isRequestingAppUnlock || isRequestingEmergencyUnlock {
+                notificationManager.registerNotificationCategories()
+            }
+            if let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend"),
+               shared.bool(forKey: "lockoutExpiredDeepLink") {
+                shared.set(false, forKey: "lockoutExpiredDeepLink")
+                showLockoutExpiredChallenge = true
                 notificationManager.registerNotificationCategories()
             }
         }

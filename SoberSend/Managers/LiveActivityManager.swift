@@ -18,6 +18,7 @@ final class LiveActivityManager {
         lockedAppsCount: Int,
         streakNights: Int
     ) {
+        guard !isActivityRunning else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             print("Live Activities are not enabled")
             return
@@ -55,14 +56,19 @@ final class LiveActivityManager {
         }
     }
 
-    func updateLockdownActivity(lockEndTime: Date, isInLockWindow: Bool) async {
+    func updateLockdownActivity(
+        lockEndTime: Date,
+        isInLockWindow: Bool,
+        lockedAppsCount: Int,
+        streakNights: Int
+    ) async {
         guard let activity = currentActivity else { return }
 
         let state = LockdownActivityAttributes.ContentState(
             lockEndTime: lockEndTime,
             isInLockWindow: isInLockWindow,
-            lockedAppsCount: activity.content.state.lockedAppsCount,
-            streakNights: activity.content.state.streakNights
+            lockedAppsCount: lockedAppsCount,
+            streakNights: streakNights
         )
 
         let content = ActivityContent(state: state, staleDate: lockEndTime.addingTimeInterval(60 * 30))

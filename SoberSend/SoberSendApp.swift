@@ -92,6 +92,7 @@ struct SoberSendApp: App {
     }
 
     private func startLiveActivityIfNeeded() {
+        guard !LiveActivityManager.shared.isActivityRunning else { return }
         guard lockdownManager.isAppBlockingActive() else {
             Task { @MainActor in
                 await LiveActivityManager.shared.endLockdownActivity()
