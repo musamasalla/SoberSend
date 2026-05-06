@@ -92,17 +92,21 @@ struct SoberSendApp: App {
     }
 
     private func startLiveActivityIfNeeded() {
-        guard !LiveActivityManager.shared.isActivityRunning else { return }
-        guard lockdownManager.isAppBlockingActive() else {
-            Task { @MainActor in
-                await LiveActivityManager.shared.endLockdownActivity()
+        let isBlocking = lockdownManager.isAppBlockingActive()
+
+        // End if lockdown is no longer active
+        guard isBlocking else {
+            if LiveActivityManager.shared.isActivityRunning {
+                Task { @MainActor in
+                    await LiveActivityManager.shared.endLockdownActivity()
+                }
             }
             return
         }
 
+        // Compute lock end time and schedule strings
         let startMinuteStr = String(format: "%02d", lockdownManager.lockStartMinute)
         let endMinuteStr = String(format: "%02d", lockdownManager.lockEndMinute)
-
         let startTime = "\(lockdownManager.lockStartHour):\(startMinuteStr)"
         let endTime = "\(lockdownManager.lockEndHour):\(endMinuteStr)"
 
@@ -116,15 +120,26 @@ struct SoberSendApp: App {
         }
 
         let lockedCount = lockdownManager.selectionToDiscourage.applicationTokens.count
+        let streak = lockdownManager.streakNights
 
         Task { @MainActor in
-            LiveActivityManager.shared.startLockdownActivity(
-                startTime: startTime,
-                endTime: endTime,
-                lockEndTime: lockEndTime,
-                lockedAppsCount: lockedCount,
-                streakNights: 0
-            )
+            if LiveActivityManager.shared.isActivityRunning {
+                // Smooth update of existing Live Activity
+                await LiveActivityManager.shared.updateLockdownActivity(
+                    lockEndTime: lockEndTime,
+                    isInLockWindow: true,
+                    lockedAppsCount: lockedCount,
+                    streakNights: streak
+                )
+            } else {
+                LiveActivityManager.shared.startLockdownActivity(
+                    startTime: startTime,
+                    endTime: endTime,
+                    lockEndTime: lockEndTime,
+                    lockedAppsCount: lockedCount,
+                    streakNights: streak
+                )
+            }
         }
     }
 }

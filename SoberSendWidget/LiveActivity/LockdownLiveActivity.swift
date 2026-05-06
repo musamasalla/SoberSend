@@ -45,6 +45,8 @@ struct LockdownLiveActivity: Widget {
                                 .foregroundStyle(.mint)
                         }
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(context.state.isInLockWindow ? "App lock active, unlocks at " + context.attributes.scheduleEndTime : "Apps are unlocked")
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack(spacing: 16) {
@@ -135,6 +137,8 @@ struct LockScreenLiveActivityView: View {
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(context.state.isInLockWindow ? "App lock active, unlocks at \(context.attributes.scheduleEndTime), \(context.state.streakNights) night streak" : "Apps are unlocked")
 
             Spacer()
 

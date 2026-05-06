@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import UserNotifications
 
 @MainActor
@@ -24,6 +25,10 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
         let userInfo = response.notification.request.content.userInfo
         let actionIdentifier = response.actionIdentifier
         let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")
+
+        // Haptic feedback on user interaction
+        let haptic = UINotificationFeedbackGenerator()
+        await haptic.notificationOccurred(.success)
 
         switch actionIdentifier {
         case UNNotificationDefaultActionIdentifier, "TAKE_CHALLENGE":

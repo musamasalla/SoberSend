@@ -80,8 +80,14 @@ class LockdownManager {
         self.lockEndHour = sharedDefaults.object(forKey: "lockEndHour") == nil ? 7 : sharedDefaults.integer(forKey: "lockEndHour")
         self.lockEndMinute = sharedDefaults.integer(forKey: "lockEndMinute")
 
+        self.streakNights = sharedDefaults.integer(forKey: "streakNights")
+        if let lastStreakTimestamp = sharedDefaults.object(forKey: "lastStreakIncrementDate") as? TimeInterval {
+            self.lastStreakIncrementDate = Date(timeIntervalSince1970: lastStreakTimestamp)
+        }
+
         loadSelection()
         checkAuthorization()
+        lastBlockingState = isAppBlockingActive()
         refreshLiveActivityState()
 
         // Load bypass if still valid
@@ -133,7 +139,10 @@ class LockdownManager {
             store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
             
             // Register with OS for background enforcement
-            startDeviceActivityMonitoring()
+            let started = startDeviceActivityMonitoring()
+            if !started {
+                print("⚠️ Warning: Could not start DeviceActivity monitoring. User may need to enable Screen Time.")
+            }
         } else {
             clearRestrictions()
         }
@@ -145,21 +154,19 @@ class LockdownManager {
     }
 
     // MARK: - Device Activity Monitoring (Background Enforcement)
-    private func startDeviceActivityMonitoring() {
-        guard isAuthorized else { return }
+    /// Returns `true` if monitoring starts successfully, `false` if the user hasn't granted Screen Time access.
+    @discardableResult
+    func startDeviceActivityMonitoring() -> Bool {
+        guard isAuthorized else { return false }
         
         let startHour = lockStartHour
         let startMinute = lockStartMinute
         let endHour = lockEndHour
         let endMinute = lockEndMinute
         
-        // Create components for the schedule
         let startComponents = DateComponents(hour: startHour, minute: startMinute)
         let endComponents = DateComponents(hour: endHour, minute: endMinute)
         
-        // DeviceActivitySchedule handles the "Every Day" logic if we want, 
-        // but since we have a custom bitmask, we monitor the window and let 
-        // isAppBlockingActive check the weekday on each transition or manual trigger.
         let schedule = DeviceActivitySchedule(
             intervalStart: startComponents,
             intervalEnd: endComponents,
@@ -169,8 +176,10 @@ class LockdownManager {
         do {
             try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
             print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
+            return true
         } catch {
             print("Failed to start monitoring: \(error)")
+            return false
         }
     }
 
@@ -239,9 +248,30 @@ class LockdownManager {
 
     // MARK: - Live Activity Tracking
     var isBlockingForLiveActivity: Bool = false
+    var streakNights: Int = 0
+    private var lastStreakIncrementDate: Date?
+    private var lastBlockingState: Bool = false
 
     private func refreshLiveActivityState() {
-        isBlockingForLiveActivity = isAppBlockingActive()
+        let currentlyBlocking = isAppBlockingActive()
+        if !lastBlockingState && currentlyBlocking {
+            incrementStreakIfNeeded()
+        }
+        lastBlockingState = currentlyBlocking
+        isBlockingForLiveActivity = currentlyBlocking
+    }
+
+    private func incrementStreakIfNeeded() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        if let lastDate = lastStreakIncrementDate,
+           calendar.isDate(calendar.startOfDay(for: lastDate), inSameDayAs: today) {
+            return
+        }
+        streakNights += 1
+        lastStreakIncrementDate = Date()
+        sharedDefaults.set(streakNights, forKey: "streakNights")
+        sharedDefaults.set(Date().timeIntervalSince1970, forKey: "lastStreakIncrementDate")
     }
 
     // MARK: - Window Check

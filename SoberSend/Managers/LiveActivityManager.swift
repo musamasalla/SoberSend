@@ -9,6 +9,10 @@ final class LiveActivityManager {
     private(set) var isActivityRunning: Bool = false
     private var currentActivity: Activity<LockdownActivityAttributes>?
 
+    // Analytics
+    private var sessionStartTime: Date?
+    private var totalUpdates: Int = 0
+
     private init() {}
 
     func startLockdownActivity(
@@ -50,6 +54,8 @@ final class LiveActivityManager {
             )
             currentActivity = activity
             isActivityRunning = true
+            sessionStartTime = Date()
+            totalUpdates = 0
             print("Live Activity started: \(activity.id)")
         } catch {
             print("Failed to start Live Activity: \(error)")
@@ -73,6 +79,7 @@ final class LiveActivityManager {
 
         let content = ActivityContent(state: state, staleDate: lockEndTime.addingTimeInterval(60 * 30))
 
+        totalUpdates += 1
         await activity.update(content)
 
         if !isInLockWindow {
@@ -95,6 +102,13 @@ final class LiveActivityManager {
         await activity.end(content, dismissalPolicy: .immediate)
         currentActivity = nil
         isActivityRunning = false
+        
+        // Log session analytics
+        if let startTime = sessionStartTime {
+            let duration = Date().timeIntervalSince(startTime)
+            print("Live Activity session ended: duration=\(duration)s, updates=\(totalUpdates)")
+            sessionStartTime = nil
+        }
     }
 
     func endAllActivities() async {

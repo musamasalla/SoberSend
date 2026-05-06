@@ -393,7 +393,7 @@ final class LiveActivityManager {
     private var currentActivity: Activity<LockdownActivityAttributes>?
 
     func startLockdownActivity(startTime:endTime:lockEndTime:lockedAppsCount:streakNights:)
-    func updateLockdownActivity(lockEndTime:isInLockWindow:) async
+    func updateLockdownActivity(lockEndTime:isInLockWindow:lockedAppsCount:streakNights:) async
     func endLockdownActivity() async
     func endAllActivities() async  // Cleanup on app launch
 }
