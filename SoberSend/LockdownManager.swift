@@ -131,22 +131,27 @@ class LockdownManager {
         }
     }
 
-    func setShieldRestrictions() {
-        refreshLiveActivityState()
-        if isAppBlockingActive() {
-            store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
-            store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
-            store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
-            
-            // Register with OS for background enforcement
-            let started = startDeviceActivityMonitoring()
-            if !started {
-                print("⚠️ Warning: Could not start DeviceActivity monitoring. User may need to enable Screen Time.")
-            }
-        } else {
-            clearRestrictions()
-        }
-    }
+     func setShieldRestrictions() {
+         refreshLiveActivityState()
+         if isAppBlockingActive() {
+             store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
+             store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
+             store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
+              
+             // Register with OS for background enforcement
+             let started = startDeviceActivityMonitoring()
+             if !started {
+                 print("⚠️ Warning: Could not start DeviceActivity monitoring. User may need to enable Screen Time.")
+                 // The error message is set by startDeviceActivityMonitoring() itself
+             } else {
+                 // All clear — monitoring is running
+                 deviceActivityErrorMessage = nil
+             }
+         } else {
+             clearRestrictions()
+             deviceActivityErrorMessage = nil
+         }
+     }
 
     func clearRestrictions() {
         store.clearAllSettings()
@@ -176,8 +181,24 @@ class LockdownManager {
         do {
             try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
             print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
+            deviceActivityErrorMessage = nil
             return true
+        } catch let error as NSError where error.domain == "DeviceActivity" {
+            let nsError = error
+            let message: String
+            switch nsError.code {
+            case 1:
+                message = "Screen Time access denied. Please enable it in Settings > Screen Time."
+            case 2:
+                message = "Screen Time authorization required. Please authorize SoberSend in Settings."
+            default:
+                message = nsError.localizedDescription
+            }
+            deviceActivityErrorMessage = message
+            print("Failed to start monitoring: \(message) (code: \(nsError.code))")
+            return false
         } catch {
+            deviceActivityErrorMessage = "Failed to start device monitoring: \(error.localizedDescription)"
             print("Failed to start monitoring: \(error)")
             return false
         }
@@ -197,6 +218,11 @@ class LockdownManager {
     func setAllDays(active: Bool) {
         activeDaysMask = active ? 127 : 0
         setShieldRestrictions()
+    }
+
+    /// Call this from the UI when the user dismisses the DeviceActivity error banner.
+    func dismissDeviceActivityError() {
+        deviceActivityErrorMessage = nil
     }
 
     // MARK: - Bypass Management
@@ -248,6 +274,7 @@ class LockdownManager {
 
     // MARK: - Live Activity Tracking
     var isBlockingForLiveActivity: Bool = false
+    var deviceActivityErrorMessage: String? = nil
     var streakNights: Int = 0
     private var lastStreakIncrementDate: Date?
     private var lastBlockingState: Bool = false
