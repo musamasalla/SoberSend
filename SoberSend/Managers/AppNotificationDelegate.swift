@@ -28,7 +28,7 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
 
         // Haptic feedback on user interaction
         let haptic = UINotificationFeedbackGenerator()
-        await haptic.notificationOccurred(.success)
+        haptic.notificationOccurred(.success)
 
         switch actionIdentifier {
         case UNNotificationDefaultActionIdentifier, "TAKE_CHALLENGE":

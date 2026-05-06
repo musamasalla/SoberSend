@@ -47,8 +47,9 @@ class ChallengeManager {
         
         let inputNode = audioEngine.inputNode
         
-        recognitionTask = speechRecognizer?.recognitionTask(with: request) { result, error in
+        recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
             Task { @MainActor in
+                guard let self else { return }
                 if let result = result {
                     self.recognizedText = result.bestTranscription.formattedString
                     self.speechScore = self.calculateSimilarity(between: targetPhrase, and: self.recognizedText)

@@ -17,6 +17,7 @@ class EmergencyUnlockManager {
     // 5 minute unlock, 24 hour cooldown after use
     private let unlockDuration: TimeInterval = 5 * 60
     private let cooldownDuration: TimeInterval = 24 * 60 * 60
+    private var unlockTimer: Timer?
     
     init() {
         let timestamp = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")?.double(forKey: "emergencyCooldownEndTime") ?? 0
@@ -75,9 +76,15 @@ class EmergencyUnlockManager {
         emergencyUnlockEndTime = now.addingTimeInterval(unlockDuration)
         emergencyCooldownEndTime = now.addingTimeInterval(cooldownDuration)
         
+        // Cancel old timer if any
+        unlockTimer?.invalidate()
+        
         // Auto-lock after duration
-        DispatchQueue.main.asyncAfter(deadline: .now() + unlockDuration) { [weak self] in
-            self?.isEmergencyUnlocked = false
+        unlockTimer = Timer.scheduledTimer(withTimeInterval: unlockDuration, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.isEmergencyUnlocked = false
+                self?.emergencyUnlockEndTime = nil
+            }
         }
     }
 }

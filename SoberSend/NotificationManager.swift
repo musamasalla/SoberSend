@@ -3,7 +3,7 @@ import UserNotifications
 
 @MainActor
 @Observable
-class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
+class NotificationManager: NSObject {
     var isAuthorized: Bool = false
 
     override init() {
@@ -267,9 +267,9 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let request = UNNotificationRequest(identifier: "lockout_expired", content: content, trigger: trigger)
 
         UNUserNotificationCenter.current().add(request) { error in
-            if let error { print("Error scheduling lockout expired notification: \(error)") }
-        }
+        if let error { print("Error scheduling lockout expired notification: \(error)") }
     }
+}
 
     // MARK: - UNUserNotificationCenterDelegate
     nonisolated func userNotificationCenter(
