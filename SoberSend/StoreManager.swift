@@ -11,14 +11,13 @@ class StoreManager {
     var productsLoadError: String? = nil
 
     private let productIDs = ["com.sobersend.premium.monthly", "com.sobersend.premium.yearly"]
-    private var updatesTask: Task<Void, Never>? = nil
 
     init() {
         Task {
             await requestProducts()
             await updatePremiumStatus()
         }
-        updatesTask = Task {
+        Task {
             for await result in Transaction.updates {
                 do {
                     let transaction = try self.checkVerified(result)
