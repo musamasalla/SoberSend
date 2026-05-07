@@ -16,6 +16,7 @@ struct ChallengeCoordinatorView: View {
     @State private var showEmergencyUnlock = false
     
     @AppStorage("challengeLockoutEnd", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockoutEndTimestamp: Double = 0
+    @AppStorage("challengeConsecutiveFailures", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var consecutiveFailures: Int = 0
     @State private var isLockedOut = false
     @State private var lockoutRemaining: TimeInterval = 0
     @State private var lockoutTimer: Timer?
@@ -58,6 +59,20 @@ struct ChallengeCoordinatorView: View {
                             .padding(.horizontal)
                             .padding(.top, 8)
                         }
+                        
+                        // Difficulty badge
+                        HStack {
+                            Spacer()
+                            Text(difficulty.rawValue.uppercased())
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(difficultyColor)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(difficultyColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                            Spacer()
+                        }
+                        .padding(.top, 12)
                         
                         // Progress
                         if sequence.count > 1 {
@@ -113,6 +128,12 @@ struct ChallengeCoordinatorView: View {
                 .font(SoberTheme.headline(22)).foregroundStyle(SoberTheme.textPrimary)
             Text("You'll thank yourself tomorrow.")
                 .font(SoberTheme.body()).foregroundStyle(SoberTheme.textSecondary)
+            if consecutiveFailures > 1 {
+                Text("Consecutive failure #\(consecutiveFailures). Penalty increased.")
+                    .font(SoberTheme.caption())
+                    .foregroundStyle(SoberTheme.peachText)
+                    .multilineTextAlignment(.center)
+            }
             Text(lockoutTimeString)
                 .font(SoberTheme.mono(48)).foregroundStyle(SoberTheme.peachText)
             Text("remaining")
@@ -121,6 +142,15 @@ struct ChallengeCoordinatorView: View {
             Button("Go Back") { onResult(false) }
                 .buttonStyle(SoberSecondaryButtonStyle())
                 .padding(.horizontal, 40).padding(.bottom, 50)
+        }
+    }
+    
+    private var difficultyColor: Color {
+        switch difficulty {
+        case .easy: return .green
+        case .medium: return .yellow
+        case .hard: return .orange
+        case .expert: return .red
         }
     }
     
@@ -148,9 +178,16 @@ struct ChallengeCoordinatorView: View {
     }
     
     private func activateLockout() {
-        let tenMinutes: TimeInterval = 10 * 60
-        lockoutEndTimestamp = Date().timeIntervalSince1970 + tenMinutes
-        isLockedOut = true; lockoutRemaining = tenMinutes; startLockoutTimer()
+        // Increment consecutive failures
+        consecutiveFailures += 1
+        // Progressive penalty: 10 min base + 5 min per consecutive failure (max 30 min)
+        let baseDuration: TimeInterval = 10 * 60
+        let penaltyPerFailure: TimeInterval = 5 * 60
+        let maxDuration: TimeInterval = 30 * 60
+        let totalDuration = min(baseDuration + TimeInterval(consecutiveFailures - 1) * penaltyPerFailure, maxDuration)
+        
+        lockoutEndTimestamp = Date().timeIntervalSince1970 + totalDuration
+        isLockedOut = true; lockoutRemaining = totalDuration; startLockoutTimer()
     }
     
     private func setupSequence() {
@@ -169,6 +206,8 @@ struct ChallengeCoordinatorView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             currentStage += 1
             if currentStage >= sequence.count { attempt.unlockGranted = true; try? modelContext.save(); onResult(true) }
+            // Reset consecutive failures on overall success
+            if currentStage >= sequence.count { consecutiveFailures = 0 }
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             try? modelContext.save(); activateLockout()
