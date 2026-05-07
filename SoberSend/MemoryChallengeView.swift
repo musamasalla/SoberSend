@@ -66,7 +66,8 @@ struct MemoryChallengeView: View {
         switch difficulty {
         case .easy: count = 4
         case .medium: count = 5
-        case .hard, .expert: count = 7
+        case .hard: count = 7
+        case .expert: count = 9
         }
         
         sequence = (0..<count).map { _ in availableColors.randomElement()! }

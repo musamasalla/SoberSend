@@ -38,7 +38,7 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $isRequestingAppUnlock) {
             ChallengeCoordinatorView(
                 contactOrAppName: "Restricted App",
-                difficulty: .expert,
+                difficulty: storeManager.isPremium ? .expert : .medium,
                 soberNote: globalSoberNote.isEmpty ? nil : globalSoberNote
             ) { passed in
                 if passed {

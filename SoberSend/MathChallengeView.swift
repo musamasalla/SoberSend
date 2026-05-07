@@ -93,8 +93,13 @@ struct MathChallengeView: View {
             num2 = Int.random(in: 2...9)
             operatorSymbol = "×"
             correctAnswer = num1 * num2
-        case .hard, .expert:
+        case .hard:
             num1 = Int.random(in: 100...999)
+            num2 = Int.random(in: 11...99)
+            operatorSymbol = "×"
+            correctAnswer = num1 * num2
+        case .expert:
+            num1 = Int.random(in: 1000...9999)
             num2 = Int.random(in: 11...99)
             operatorSymbol = "×"
             correctAnswer = num1 * num2

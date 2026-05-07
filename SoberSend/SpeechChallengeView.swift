@@ -43,6 +43,30 @@ struct SpeechChallengeView: View {
     @State private var selectedFailure: (heard: String, commentary: String)? = nil
     @State private var twistedIndex: Int = 0
     
+    // Speech accuracy threshold scales with difficulty  
+    private var requiredAccuracy: Double {
+        switch difficulty {
+        case .easy: return 0.80
+        case .medium: return 0.85
+        case .hard: return 0.90
+        case .expert: return 0.95
+        }
+    }
+    
+    // Pick a random twister appropriate for the current difficulty, returning the twister and its original index
+    private func pickRandomTwister() -> (phrase: String, hint: String, originalIndex: Int) {
+        let (minIndex, maxIndex): (Int, Int)
+        switch difficulty {
+        case .easy: (minIndex, maxIndex) = (0, 2)
+        case .medium: (minIndex, maxIndex) = (3, 5)
+        case .hard: (minIndex, maxIndex) = (6, 8)
+        case .expert: (minIndex, maxIndex) = (9, 9)
+        }
+        let originalIndex = Int.random(in: minIndex...maxIndex)
+        let twister = tongueTwisters[originalIndex]
+        return (twister.phrase, twister.hint, originalIndex)
+    }
+    
     var body: some View {
         VStack(spacing: 24) {
             Text("Speech Challenge 🎤")
@@ -132,9 +156,9 @@ struct SpeechChallengeView: View {
                     .frame(height: 8)
                     .padding(.horizontal)
                     
-                    Text("\(Int(pct * 100))% accuracy — need 85%")
+                    Text("\(Int(pct * 100))% accuracy — need \(Int(requiredAccuracy * 100))%")
                         .font(.caption)
-                        .foregroundColor(pct >= 0.85 ? .green : .orange)
+                        .foregroundColor(pct >= requiredAccuracy ? .green : .orange)
                 }
             }
             
@@ -175,8 +199,9 @@ struct SpeechChallengeView: View {
             }
         }
         .onAppear {
-            twistedIndex = Int.random(in: 0..<tongueTwisters.count)
-            targetPhrase = tongueTwisters[twistedIndex].phrase
+            let (phrase, _, originalIndex) = pickRandomTwister()
+            twistedIndex = originalIndex
+            targetPhrase = phrase
             challengeManager.checkSpeechAuthorization()
         }
         .onDisappear {
@@ -193,7 +218,7 @@ struct SpeechChallengeView: View {
         challengeManager.stopRecording()
         
         let score = challengeManager.speechScore
-        if score >= 0.85 {
+        if score >= requiredAccuracy {
             SoundManager.shared.playSuccess()
             HapticManager.shared.notification(type: .success)
             onComplete(true)
@@ -211,11 +236,12 @@ struct SpeechChallengeView: View {
                     onComplete(false)
                 }
             } else {
-                // Pick new twister
+                // Pick new twister appropriate for this difficulty
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     withAnimation { showFailState = false }
-                    twistedIndex = Int.random(in: 0..<tongueTwisters.count)
-                    targetPhrase = tongueTwisters[twistedIndex].phrase
+                    let (phrase, _, originalIndex) = pickRandomTwister()
+                    twistedIndex = originalIndex
+                    targetPhrase = phrase
                 }
             }
         }
