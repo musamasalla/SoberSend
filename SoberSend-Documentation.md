@@ -692,3 +692,163 @@ SoberSend registers the URL scheme `sobersend://` for deep linking from notifica
 - Since `StoreManager` is a long-lived app object, the task runs for the app lifetime; when the app is killed, the OS terminates all tasks
 
 **File Changed:** `StoreManager.swift` (1 line removed, `updatesTask` property and assignment removed)
+
+---
+
+## Appendix F: Challenge System Deep Audit & Fixes
+
+This section documents the comprehensive challenge difficulty system audit and the fixes applied in the polish pass.
+
+### Challenge Difficulty Architecture
+
+The challenge system uses a `ChallengeDifficulty` enum (`.easy`, `.medium`, `.hard`, `.expert`) that controls both the **quantity** and **quality** of challenges presented to the user.
+
+#### Quantity by Difficulty (in `ChallengeCoordinatorView`)
+
+| Level | Challenges | Sequence |
+|-------|-----------|----------|
+| Easy | 1 | `math` |
+| Medium | 2 | `math` → `memory` |
+| Hard | 2 | `math` → `speech` |
+| Expert | 3 | `math` → `memory` → `speech` |
+
+### Fix 1: Math Challenge Difficulty Scaling
+
+**Before:** `.expert` used the same 3-digit × 2-digit as `.hard` (no difference).
+
+**After:**
+
+| Difficulty | Numbers | Operation | Example |
+|------------|---------|-----------|---------|
+| Easy | 2-digits | Addition (×) | 45 + 72 = ? |
+| Medium | 3-digit × 1-digit | Multiplication | 456 × 7 = ? |
+| Hard | 3-digit × 2-digit | Multiplication | 456 × 78 = ? |
+| Expert | 4-digit × 2-digit | Multiplication | 2456 × 89 = ? |
+
+**Metric:** Expert is now clearly harder by an order of magnitude.
+
+**File:** `MathChallengeView.swift`
+
+### Fix 2: Memory Challenge Difficulty Scaling
+
+**Before:** `.expert` showed 7 colors, same as `.hard`.
+
+**After:**
+
+| Difficulty | Colors to Memorize | Display Time |
+|------------|-------------------|-------------|
+| Easy | 4 | 3 seconds |
+| Medium | 5 | 3 seconds |
+| Hard | 7 | 3 seconds |
+| Expert | 8 | 3 seconds |
+
+**Note:** Expert was initially raised to 9 but lowered to 8 after testing showed 9 colors was impractical for human working memory.
+
+**File:** `MemoryChallengeView.swift`
+
+### Fix 3: Speech Challenge Scaling (Previously Broken)
+
+**Before:** Completely ignored the `difficulty` parameter. Always used 85% accuracy threshold and randomly selected from all 10 tongue twisters regardless of difficulty.
+
+**After:** Speech challenge now fully respects difficulty:
+
+| Difficulty | Accuracy Threshold | Twister Pool | Count |
+|------------|-------------------|----------|-------|
+| Easy | 80% | Phrases 0-2 | 3 twisters |
+| Medium | 85% | Phrases 3-5 | 3 twisters |
+| Hard | 90% | Phrases 6-8 | 3 twisters |
+| Expert | 93% | Phrases 9-12 | 4 twisters |
+
+**Twister Library (13 total):**
+
+```
+Easy (0-2):
+  0: "She sells seashells by the seashore"
+  1: "Peter Piper picked a peck of pickled peppers"
+  2: "Toy boat, toy boat, toy boat"
+
+Medium (3-5):
+  3: "How much wood would a woodchuck chuck if a woodchuck could chuck wood"
+  4: "Red lorry, yellow lorry, red lorry, yellow lorry"
+  5: "Fuzzy Wuzzy was a bear, Fuzzy Wuzzy had no hair"
+
+Hard (6-8):
+  6: "Irish wristwatch, Swiss wristwatch"
+  7: "Unique New York, unique New York, you know you need unique New York"
+  8: "Six slippery snails slid slowly seaward"
+
+Expert (9-12):
+  9: "Betty Botter bought some butter but the butter Betty bought was bitter"
+ 10: "The sixth sheikh's sixth sheep's sick..."
+ 11: "The thirty-three thieves thought that they thrilled the throne throughout Thursday"
+ 12: "Pad kid poured curd pulled cod"
+```
+
+**Failure States:** Properly mapped to each twister index via `pickRandomTwister()`.
+
+**File:** `SpeechChallengeView.swift`
+
+### Fix 4: App Unlock Difficulty by Premium Status
+
+**Before:** Direct app unlock bypass was **always** `.expert` (3 challenges) regardless of premium status.
+
+**After:** Free users get `.medium` (2 challenges) for direct app unlock, premium users get `.expert` (3 challenges).
+
+**Code (`ContentView.swift`):**
+```swift
+difficulty: storeManager.isPremium ? .expert : .medium
+```
+
+### Fix 5: Visual Difficulty Indicator
+
+Added a colored difficulty badge to `ChallengeCoordinatorView` that shows the current difficulty level:
+
+| Difficulty | Color | Hex |
+|------------|-------|------|
+| Easy | Green | `#34C759` |
+| Medium | Yellow | `#FFCC00` |
+| Hard | Orange | `#FF9500` |
+| Expert | Red | `#FF3B30` |
+
+Badge is displayed at the top of the challenge flow, before the progress indicator.
+
+**File:** `ChallengeCoordinatorView.swift`
+
+### Fix 6: Progressive Lockout Penalty for Repeated Failures
+
+**Problem:** Lockout duration was always a fixed 10 minutes. Users could spam attempts with impunity.
+
+**Solution:** Progressive lockout duration based on `consecutiveFailures`:
+
+| Failure # | Base + Penalty | Total Duration | Cap |
+|-----------|---------------|----------------|-----|
+| 1 | 10 + 0 | 10 min | 30 min |
+| 2 | 10 + 5 | 15 min | 30 min |
+| 3 | 10 + 10 | 20 min | 30 min |
+| 4+ | 10 + 15, 20, etc. | 30 min | 30 min |
+
+**Reset:** Consecutive failures are reset to 0 upon a successful unlock.
+
+**Storage:** `challengeConsecutiveFailures` in `UserDefaults` (App Group).
+
+**Files:** `ChallengeCoordinatorView.swift`
+
+### Fix 7: Lockout Visual Feedback
+
+Added a `consecutiveFailure` counter and warning text in the lockout view. Users now see:
+- "Consecutive failure #3. Penalty increased."
+- Lockout timer (e.g., "15:00 remaining")
+
+### Per-Contact Difficulty
+
+**Already working correctly.** Per-contact unlock via `IntentionsView` passes `contact.difficulty` directly. This allows free users to set `.easy` for less critical contacts, while premium users can set `.hard`/`.expert`.
+
+### Lockout Expired Challenge: Design Decision
+
+**Status:** Kept as `.medium` for all users.
+
+**Reasoning:** Lockout is a recovery mechanism after a 10-minute break. Making it harder (e.g., `.expert` for premium) would be punitive rather than restorative. The purpose of the 10-minute lockout is to let the user sober up, not to punish them further.
+
+---
+
+*Documentation updated with all challenge system fixes. Last updated: May 2026.*
