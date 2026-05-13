@@ -4,7 +4,7 @@
 > **Bundle ID:** `com.musamasalla.SoberSend`  
 > **Platform:** Apple App Store (iOS 17+)  
 > **Category:** Health & Fitness (Primary) · Lifestyle (Secondary)  
-> **Pricing:** Freemium (Monthly $3.99 / Yearly $29.99 with 7-day free trial)
+> **Pricing:** Freemium (Monthly $3.99 with 7-day free trial / Yearly $29.99)
 
 ---
 
@@ -281,8 +281,8 @@ Glanceable lock status right on your home screen.
 Free tier: 1 app + 1 contact + Easy/Medium challenges
 Premium unlocks: Unlimited apps & contacts, all challenge levels, full stats, morning report sharing, all achievements.
 
-• Monthly: $3.99/month
-• Yearly: $29.99/year (7-day free trial)
+• Monthly: $3.99/month (7-day free trial)
+• Yearly: $29.99/year
 
 ━━━
 
