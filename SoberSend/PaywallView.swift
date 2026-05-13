@@ -23,7 +23,7 @@ struct PaywallView: View {
         guard let id = selectedProductID else { return yearlyProduct }
         return storeManager.products.first { $0.id == id }
     }
-    private var yearlyHasTrial: Bool { yearlyProduct?.subscription?.introductoryOffer?.paymentMode == .freeTrial }
+    private var monthlyHasTrial: Bool { monthlyProduct?.subscription?.introductoryOffer?.paymentMode == .freeTrial }
 
     private func yearlyPerMonth(_ product: Product) -> String {
         let perMonth = product.price / 12
@@ -32,7 +32,7 @@ struct PaywallView: View {
 
     private var ctaLabel: String {
         guard let product = selectedProduct else { return "Subscribe" }
-        if product.id == yearlyID, yearlyHasTrial { return "Start Free Trial" }
+        if product.id == monthlyID, monthlyHasTrial { return "Start Free Trial" }
         let period = product.subscription?.subscriptionPeriod.unit == .month ? "Monthly" : "Yearly"
         return "Start \(period) Plan"
     }
@@ -51,7 +51,7 @@ struct PaywallView: View {
 
                     heroSection.padding(.top, 12)
 
-                    if yearlyHasTrial { trialBadge.padding(.top, 16).padding(.horizontal, 24) }
+                    if monthlyHasTrial { trialBadge.padding(.top, 16).padding(.horizontal, 24) }
 
                     featuresSection.padding(.horizontal, 24).padding(.top, 28)
                     planSelector.padding(.horizontal, 24).padding(.top, 28)
@@ -75,12 +75,12 @@ struct PaywallView: View {
         }
         .background(SoberTheme.background)
         .onAppear {
-            if selectedProductID == nil { selectedProductID = yearlyID }
+            if selectedProductID == nil { selectedProductID = monthlyID }
             withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) { shieldGlow = true }
         }
         .task {
             if storeManager.products.isEmpty && !storeManager.isLoadingProducts { await storeManager.requestProducts() }
-            if selectedProductID == nil { selectedProductID = yearlyID }
+            if selectedProductID == nil { selectedProductID = monthlyID }
         }
     }
 
@@ -145,15 +145,16 @@ struct PaywallView: View {
     // MARK: - Plan Selector
     private var planSelector: some View {
         VStack(spacing: 10) {
-            if let yearly = yearlyProduct {
-                PaywallPlanCard(product: yearly, badge: yearlyHasTrial ? "7-Day Free Trial" : "Best Value",
-                    badgeColor: yearlyHasTrial ? SoberTheme.mintText : SoberTheme.lavenderText,
-                    subtitle: "Only \(yearlyPerMonth(yearly)) · billed $\(yearly.displayPrice)/yr",
-                    isSelected: selectedProductID == yearlyID) { selectedProductID = yearlyID }
-            }
             if let monthly = monthlyProduct {
-                PaywallPlanCard(product: monthly, badge: nil, badgeColor: .clear,
+                PaywallPlanCard(product: monthly, badge: monthlyHasTrial ? "7-Day Free Trial" : nil,
+                    badgeColor: monthlyHasTrial ? SoberTheme.mintText : .clear,
                     subtitle: "Renews monthly", isSelected: selectedProductID == monthlyID) { selectedProductID = monthlyID }
+            }
+            if let yearly = yearlyProduct {
+                PaywallPlanCard(product: yearly, badge: "Best Value",
+                    badgeColor: SoberTheme.lavenderText,
+                    subtitle: "Only \(yearlyPerMonth(yearly)) - billed \(yearly.displayPrice)/yr",
+                    isSelected: selectedProductID == yearlyID) { selectedProductID = yearlyID }
             }
             if storeManager.isLoadingProducts {
                 HStack(spacing: 10) {
@@ -183,7 +184,7 @@ struct PaywallView: View {
                     if isPurchasing { ProgressView().tint(SoberTheme.ctaForeground) }
                     else {
                         HStack(spacing: 8) {
-                            Image(systemName: selectedProduct?.id == yearlyID && yearlyHasTrial ? "gift.fill" : "lock.open.fill")
+                            Image(systemName: selectedProduct?.id == monthlyID && monthlyHasTrial ? "gift.fill" : "lock.open.fill")
                             Text(ctaLabel).font(SoberTheme.headline())
                         }.foregroundStyle(SoberTheme.ctaForeground)
                     }
@@ -196,7 +197,7 @@ struct PaywallView: View {
                 Button("OK") { errorMessage = nil }
             } message: { Text(errorMessage ?? "") }
 
-            if selectedProduct?.id == yearlyID, yearlyHasTrial {
+            if selectedProduct?.id == monthlyID, monthlyHasTrial {
                 Text("No charge today. Trial ends after 7 days.")
                     .font(SoberTheme.caption()).foregroundStyle(SoberTheme.textSecondary)
             }

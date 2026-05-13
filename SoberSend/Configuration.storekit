@@ -28,7 +28,12 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "013DC8EA",
-          "introductoryOffer" : null,
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "internalID" : "FCC2EBBE",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
           "localizations" : [
             {
               "description" : "Unlimited contacts, apps, and expert tests",
@@ -53,12 +58,7 @@
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "0D83A92A",
-          "introductoryOffer" : {
-            "displayPrice" : "0.00",
-            "internalID" : "FCC2EBBE",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Unlimited contacts, apps, and expert tests",
