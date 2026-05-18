@@ -140,7 +140,7 @@ struct ContactReminderView: View {
                     if callConfirmed {
                         if let phoneNumber = contact.phoneNumber, !phoneNumber.isEmpty {
                             Button("Call \(contact.displayName)") {
-                                if let url = URL(string:  "tel://\(phoneNumber)") {
+                                if let url = URL(string: "tel://\(phoneNumber)") {
                                     UIApplication.shared.open(url)
                                 }
                             }
