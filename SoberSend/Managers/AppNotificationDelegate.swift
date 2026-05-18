@@ -5,11 +5,12 @@ import UserNotifications
 @MainActor
 final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
 
-    static let shared = AppNotificationDelegate()
+    static let shared: AppNotificationDelegate = {
+        let delegate = AppNotificationDelegate()
+        return delegate
+    }()
 
-    private override init() {
-        super.init()
-    }
+    private override init() {}
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
@@ -26,9 +27,11 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
         let actionIdentifier = response.actionIdentifier
         let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")
 
-        // Haptic feedback on user interaction
-        let haptic = UINotificationFeedbackGenerator()
-        haptic.notificationOccurred(.success)
+        // Haptic feedback on user interaction ( runs off-main actor, so schedule onto MainActor safely)
+        Task { @MainActor in
+            let haptic = UINotificationFeedbackGenerator()
+            haptic.notificationOccurred(.success)
+        }
 
         switch actionIdentifier {
         case UNNotificationDefaultActionIdentifier, "TAKE_CHALLENGE":

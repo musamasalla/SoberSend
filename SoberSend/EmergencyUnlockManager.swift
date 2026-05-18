@@ -81,9 +81,11 @@ class EmergencyUnlockManager {
         
         // Auto-lock after duration
         unlockTimer = Timer.scheduledTimer(withTimeInterval: unlockDuration, repeats: false) { [weak self] _ in
+            // Bind local non-optional copy to avoid 'self' capture in Task
+            guard let strongSelf = self else { return }
             Task { @MainActor in
-                self?.isEmergencyUnlocked = false
-                self?.emergencyUnlockEndTime = nil
+                strongSelf.isEmergencyUnlocked = false
+                strongSelf.emergencyUnlockEndTime = nil
             }
         }
     }

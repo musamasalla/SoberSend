@@ -107,7 +107,6 @@ class StoreManager {
             }
         }
 
-        let previousStatus = isPremium
         isPremium = foundActiveSubscription
         os_log("[StoreManager] premium status: %{public}s", log: .default, type: .info, isPremium ? "PREMIUM" : "NOT PREMIUM")
     }
@@ -151,11 +150,7 @@ class StoreManager {
         switch result {
         case .verified(let safe):
             return safe
-        case .unverified(_, let error):
-            // Provide more context for unredeemable linked iTunes restore
-            if error is StoreKitError {
-                throw StoreError.userNotAuthorized
-            }
+        case .unverified:
             throw StoreError.failedVerification
         }
     }
