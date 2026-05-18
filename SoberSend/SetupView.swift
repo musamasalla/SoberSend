@@ -167,7 +167,7 @@ struct SetupView: View {
     
     private var lockTargetsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SoberSectionHeader(title: "Lock Targets", icon: "target")
+            SoberSectionHeader(title: "Reminders", icon: "target")
             
             VStack(spacing: 0) {
                 // Apps row
@@ -176,7 +176,7 @@ struct SetupView: View {
                         icon: "apps.iphone",
                         iconBg: SoberTheme.lavenderCard,
                         iconFg: SoberTheme.lavenderText,
-                        title: "Select Apps to Lock",
+                        title: "Select Apps to Block",
                         subtitle: storeManager.isPremium ? "Unlimited" : "Free: \(freeAppLimit) max"
                     )
                 }
@@ -190,7 +190,7 @@ struct SetupView: View {
                         icon: "person.crop.circle.badge.plus",
                         iconBg: SoberTheme.blueCard,
                         iconFg: SoberTheme.blueText,
-                        title: "Add Contact to Lock",
+                        title: "Add Contact Reminder",
                         subtitle: storeManager.isPremium ? "Unlimited" : "Free: \(freeContactLimit) max"
                     )
                 }
@@ -198,7 +198,7 @@ struct SetupView: View {
             }
             .soberCard()
             
-            Text("Note: Apple does not allow apps to block contacts directly in iMessage. Locked Contacts tracks who you shouldn't message and requires a challenge before removal.")
+            Text("Note: Apple does not allow apps to block calls or messages. Contact Reminders help you stay accountable by showing your sober note before you reach out.")
                 .font(SoberTheme.caption(11))
                 .foregroundStyle(SoberTheme.textSecondary)
                 .padding(.horizontal, 4)
@@ -211,7 +211,7 @@ struct SetupView: View {
     private var contactsSection: some View {
         if !contacts.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                SoberSectionHeader(title: "Locked Contacts", icon: "person.2.fill")
+                SoberSectionHeader(title: "Contact Reminders", icon: "person.2.fill")
                 
                 VStack(spacing: 0) {
                     ForEach(Array(contacts.enumerated()), id: \.element.id) { index, contact in
@@ -228,28 +228,41 @@ struct SetupView: View {
     
     @ViewBuilder
     private func contactRow(_ contact: LockedContact) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(SoberTheme.peachCard)
-                    .frame(width: 40, height: 40)
-                Text(String(contact.displayName.prefix(1)))
-                    .font(SoberTheme.headline())
-                    .foregroundStyle(SoberTheme.peachText)
+        NavigationLink {
+            ContactReminderView(contact: contact)
+                .environment(lockdownManager)
+                .environment(storeManager)
+                .environment(ChallengeManager())
+                .environment(EmergencyUnlockManager())
+                .environment(NotificationManager())
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(SoberTheme.peachCard)
+                        .frame(width: 40, height: 40)
+                    Text(String(contact.displayName.prefix(1)))
+                        .font(SoberTheme.headline())
+                        .foregroundStyle(SoberTheme.peachText)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(contact.displayName)
+                        .font(SoberTheme.headline())
+                        .foregroundStyle(SoberTheme.textPrimary)
+                    SoberPill(
+                        text: contact.difficulty.rawValue.uppercased(),
+                        bgColor: difficultyColor(contact.difficulty).0,
+                        fgColor: difficultyColor(contact.difficulty).1,
+                        small: true
+                    )
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SoberTheme.textSecondary.opacity(0.5))
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(contact.displayName)
-                    .font(SoberTheme.headline())
-                    .foregroundStyle(SoberTheme.textPrimary)
-                SoberPill(
-                    text: contact.difficulty.rawValue.uppercased(),
-                    bgColor: difficultyColor(contact.difficulty).0,
-                    fgColor: difficultyColor(contact.difficulty).1,
-                    small: true
-                )
-            }
-            Spacer()
         }
+        .buttonStyle(.plain)
         .padding(.vertical, 4)
         .contextMenu {
             Button(role: .destructive) { removeContact(contact) } label: {

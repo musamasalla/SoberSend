@@ -34,7 +34,8 @@ struct ContactPickerView: UIViewControllerRepresentable {
             } else {
                 // Default handling if no closure provided: Create a LockedContact
                 let displayName = CNContactFormatter.string(from: contact, style: .fullName) ?? "Unknown Contact"
-                let newLockedContact = LockedContact(contactID: contact.identifier, displayName: displayName)
+                let phoneNumber = contact.phoneNumbers.first?.value.stringValue
+                let newLockedContact = LockedContact(contactID: contact.identifier, displayName: displayName, phoneNumber: phoneNumber)
                 parent.modelContext.insert(newLockedContact)
                 try? parent.modelContext.save()
             }

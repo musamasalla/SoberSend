@@ -10,8 +10,9 @@ final class LockedContact {
     var lockScheduleStart: Date
     var lockScheduleEnd: Date
     var isActive: Bool
+    var phoneNumber: String?
 
-    init(contactID: String, displayName: String, difficulty: ChallengeDifficulty = .medium, soberNote: String? = nil, lockScheduleStart: Date = Date(), lockScheduleEnd: Date = Date(), isActive: Bool = true) {
+    init(contactID: String, displayName: String, difficulty: ChallengeDifficulty = .medium, soberNote: String? = nil, lockScheduleStart: Date = Date(), lockScheduleEnd: Date = Date(), isActive: Bool = true, phoneNumber: String? = nil) {
         self.contactID = contactID
         self.displayName = displayName
         self.difficultyRawValue = difficulty.rawValue
@@ -19,6 +20,7 @@ final class LockedContact {
         self.lockScheduleStart = lockScheduleStart
         self.lockScheduleEnd = lockScheduleEnd
         self.isActive = isActive
+        self.phoneNumber = phoneNumber
     }
 
     var difficulty: ChallengeDifficulty {

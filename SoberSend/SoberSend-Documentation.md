@@ -1,6 +1,6 @@
 # SoberSend - Comprehensive Technical Documentation
 
-> **SoberSend** is an iOS app that helps people in recovery by locking down their most triggering apps and contacts during vulnerable hours (default: 10 PM – 7 AM), and requiring proof of sobriety via cognitive challenges before unlocking.
+> **SoberSend** is an iOS app that helps people in recovery by locking down their most triggering apps during vulnerable hours (default: 10 PM – 7 AM), and requiring proof of sobriety via cognitive challenges before unlocking. For contacts, it provides mindful reminders and friction to help you pause before reaching out.
 
 ---
 
@@ -58,7 +58,8 @@ iOS/SoberSend/
 │   │                                    # respects system colorScheme)
 │   │
 │   ├── Screens/
-│   │   ├── SetupView.swift              # Lock targets (apps/contacts) management
+│   │   ├── SetupView.swift              # Lock targets and contact reminders management
+│   │   ├── ContactReminderView.swift    # Mindful friction before calling a contact
 │   │   ├── MorningReportView.swift      # Daily morning summary
 │   │   ├── StatsView.swift              # Progress tracking & achievements
 │   │   ├── SettingsView.swift           # Schedule, appearance, about
@@ -124,7 +125,7 @@ iOS/SoberSend/
 
 ### 3.2 Lockdown Mechanism
 
-The app uses Apple's **Screen Time API** (`FamilyControls`, `ManagedSettings`, `DeviceActivity` frameworks):
+The app uses Apple's **Screen Time API** (`FamilyControls`, `ManagedSettings`, `DeviceActivity` frameworks) to block apps:
 
 1. User selects apps/categories via `FamilyActivityPicker`
 2. `LockdownManager.setShieldRestrictions()` applies `ManagedSettingsStore` shields and updates `isBlockingForLiveActivity`
@@ -132,6 +133,8 @@ The app uses Apple's **Screen Time API** (`FamilyControls`, `ManagedSettings`, `
 4. When a shielded app is opened → **ShieldActionExtension** intercepts
 5. Extension sets a flag in shared `UserDefaults` (App Group) → `isRequestingAppUnlock`
 6. Main app detects flag → presents `ChallengeCoordinatorView` full-screen
+
+**Note on contacts:** Apple does not provide any API for blocking calls or messages from specific contacts. SoberSend's "Contact Reminders" feature stores selected contacts and presents a mindful friction screen (`ContactReminderView`) when you view them, requiring you to acknowledge your sober note and complete a challenge before calling. This is a behavioral friction tool, not an OS-level block.
 
 ### 3.3 Live Activity (Dynamic Island + Lock Screen)
 
@@ -155,15 +158,11 @@ Four difficulty levels determine challenge sequence length:
 | `hard`     | Math → Speech |
 | `expert`   | Math → Memory → Speech |
 
-**Math Challenge:** Random arithmetic problem (difficulty scales digit count and operators). 3 attempts.
-
-**Memory Challenge:** Color sequence display (4–7 colors based on difficulty), then user repeats. 3 attempts.
-
-**Speech Challenge:** Tongue twister recited aloud. `SFSpeechRecognizer` transcribes and scores word overlap against target. 85% similarity threshold required. 3 attempts.
-
-**Lockout:** After any failed challenge → 10-minute lockout timer before retry.
-
-**Bypass:** After passing all challenges → `LockdownManager.activateBypass(duration: 300)` clears shields for 5 minutes.
+| **Math Challenge** | Random arithmetic problem (difficulty scales digit count and operators). 3 attempts. |
+| **Memory Challenge** | Color sequence display (4–7 colors based on difficulty), then user repeats. 3 attempts. |
+| **Speech Challenge** | Tongue twister recited aloud. `SFSpeechRecognizer` transcribes and scores word overlap against target. 85% similarity threshold required. 3 attempts. |
+| **Lockout** | After any failed challenge → 10-minute lockout timer before retry. |
+| **Bypass** | After passing all challenges → `LockdownManager.activateBypass(duration: 300)` clears shields for 5 minutes. |
 
 ### 3.5 Emergency Unlock
 
@@ -319,7 +318,8 @@ final class LockedContact {
     var soberNote: String?         // Per-contact sober note
     var lockScheduleStart: Date    // Per-contact schedule (reserved)
     var lockScheduleEnd: Date      // Per-contact schedule (reserved)
-    var isActive: Bool              // Whether lock is currently enabled
+    var isActive: Bool              // Whether reminder is currently enabled
+    var phoneNumber: String?       // Phone number for call friction
 }
 ```
 
@@ -638,7 +638,7 @@ App Group `group.com.musamasalla.SoberSend` is used for cross-process communicat
 - **No analytics or third-party SDKs**
 - All challenge attempts (`ChallengeAttempt`) stored locally in SwiftData on-device
 - No data transmitted to any server
-- Contact picker uses system `CNContactPickerViewController` — app only receives the selected contact ID/name
+- Contact picker uses system `CNContactPickerViewController` — app only receives the selected contact ID/name and phone number
 - Speech recognition uses on-device `SFSpeechRecognizer` (requires user permission)
 
 ### 11.2 Permissions Required
@@ -648,7 +648,7 @@ App Group `group.com.musamasalla.SoberSend` is used for cross-process communicat
 | Family Controls | FamilyControls | Screen Time API for app blocking |
 | Speech Recognition | Speech | Speech challenge transcription |
 | Notifications | UserNotifications | Morning report + unlock alerts |
-| Contacts | Contacts | Contact picker for locked contacts |
+| Contacts | Contacts | Contact picker for contact reminders |
 
 ### 11.3 Emergency Unlock Security
 
@@ -740,6 +740,18 @@ Use `Product.products(for:)` with a valid StoreKit config file. For sandbox test
 
 ## 14. Recent Enhancements
 
+### Contact Reminders
+
+The **Contact Reminders** feature replaces the previous "Locked Contacts" concept. Since Apple does not provide any API for blocking calls or messages from specific contacts, SoberSend now uses a behavioral friction model:
+
+- **Select contacts** you want reminders for during your lockdown window
+- **Sober Note** per contact: write why you shouldn't reach out when vulnerable
+- **Mindful Friction**: When you tap a reminder contact, `ContactReminderView` shows your sober note and requires you to acknowledge it
+- **Challenge Gate**: Before you can call, you must pass the same cognitive challenges (math, memory, speech) used for app unlocking
+- **Call Button**: Only appears after challenge completion, with a clear note: "SoberSend cannot block calls. This reminder is here to help you pause."
+
+This design is honest about iOS limitations while still providing real behavioral support for recovery.
+
 ### Live Activity Countdown
 
 The app now shows a real-time countdown timer in the Dynamic Island and Lock Screen via `LockdownLiveActivity` (iOS 16.1+). When `lockdownManager.isBlockingForLiveActivity` becomes `true`, `SoberSendApp` calls `LiveActivityManager.startLockdownActivity()`. When it becomes `false`, the activity is ended. The countdown timer uses SwiftUI's `Text(timerInterval:countsDown:)` for automatic real-time updates.
@@ -777,7 +789,7 @@ All targets need these entitlements:
 |-----|-------|---------|
 | `NSFaceIDUsageDescription` | "SoberSend uses Face ID for the Emergency Unlock feature to verify your identity." | Face ID prompt |
 | `NSSpeechRecognitionUsageDescription` | "SoberSend requires Speech Recognition to analyze the tongue twister challenge and verify you are sober." | Speech recognition prompt |
-| `NSContactsUsageDescription` | "SoberSend needs access to your contacts so you can select which contacts to lock during your lockdown window." | Contacts prompt |
+| `NSContactsUsageDescription` | "SoberSend needs access to your contacts so you can select which contacts to set reminders for." | Contacts prompt |
 | `NSMicrophoneUsageDescription` | "SoberSend needs the microphone to listen to you reading the tongue twister challenge." | Microphone prompt |
 | `NSSupportsLiveActivities` | `YES` | Enable Live Activities |
 
@@ -798,11 +810,11 @@ SoberSend registers the URL scheme `sobersend://` for deep linking from notifica
 4. **Why StoreKit 2 over StoreKit 1?** — Async/await API, no completion handlers, automatic transaction listener.
 5. **Why 85% speech similarity threshold?** — Balances tolerance for minor mispronunciations against requiring actual effort.
 6. **Why 24-hour emergency cooldown?** — Long enough to prevent casual abuse, short enough to handle genuine emergencies.
-7. **Why not block contacts directly in iMessage?** — Apple doesn't provide any API for this. `CNContactPickerViewController` only reads contacts; no write or block capability exists.
+7. **Why not block contacts directly?** — Apple doesn't provide any API for blocking calls or messages from specific contacts. SoberSend uses a "Contact Reminder" pattern instead: it stores selected contacts and presents a mindful friction screen (`ContactReminderView`) that requires acknowledging your sober note and completing a challenge before showing a call button. This is a behavioral nudge, not an OS-level block.
 8. **Why bypass via notification rather than direct extension call?** — `UNUserNotificationCenter` in extensions requires a specific entitlement (`com.apple.developer.usernotifications.time-sensitive`) that has limited availability. The shared UserDefaults flag pattern is the most reliable cross-process communication mechanism.
 9. **Why a separate `isBlockingForLiveActivity` property?** — `isAppBlockingActive()` is a method; `onChange` requires an `Equatable` property. A dedicated `@Observable` boolean property updated by `refreshLiveActivityState()` provides a clean, observable source of truth for both the Live Activity trigger and SwiftUI's `onChange`.
 10. **Why duplicate `LockdownActivityAttributes` in both targets?** — The widget extension is a separate compilation target and cannot import the main app's module. Each target has its own copy of the struct, which is the standard pattern for App-Widget data sharing in iOS.
 
 ---
 
-*Documentation generated from source code analysis. Last updated: April 2026.*
+*Last updated: May 2026.*
