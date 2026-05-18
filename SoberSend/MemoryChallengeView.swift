@@ -70,7 +70,7 @@ struct MemoryChallengeView: View {
         case .expert: count = 8
         }
         
-        sequence = (0..<count).map { _ in availableColors.randomElement()! }
+        sequence = (0..<count).compactMap { _ in availableColors.randomElement() }
         userSequence = []
         isShowingSequence = true
         

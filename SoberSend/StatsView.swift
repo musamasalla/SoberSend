@@ -15,12 +15,13 @@ struct StatsView: View {
         var checkDate = calendar.startOfDay(for: Date())
         for _ in 0..<30 {
             let dayStart = checkDate
-            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+            guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart),
+                  let prevDay = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
             let dayAttempts = attempts.filter { $0.timestamp >= dayStart && $0.timestamp < dayEnd }
-            if dayAttempts.isEmpty { checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!; continue }
+            if dayAttempts.isEmpty { checkDate = prevDay; continue }
             if dayAttempts.contains(where: { $0.unlockGranted }) { break }
             streakDays += 1
-            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+            checkDate = prevDay
         }
         return streakDays
     }

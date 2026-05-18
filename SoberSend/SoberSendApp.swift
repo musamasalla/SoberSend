@@ -35,7 +35,11 @@ struct SoberSendApp: App {
         } catch {
             print("⚠️ SoberSend: Could not create persistent ModelContainer: \(error). Falling back to in-memory store.")
             let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-            return try! ModelContainer(for: schema, configurations: [fallbackConfig])
+            do {
+                return try ModelContainer(for: schema, configurations: [fallbackConfig])
+            } catch {
+                fatalError("❌ SoberSend: Could not create in-memory ModelContainer: \(error).")
+            }
         }
     }()
 
