@@ -13,9 +13,9 @@ struct ContentView: View {
     @AppStorage("isRequestingAppUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingAppUnlock: Bool = false
     @AppStorage("isRequestingEmergencyUnlock", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var isRequestingEmergencyUnlock: Bool = false
     @State private var showLockoutExpiredChallenge: Bool = false
-    @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var globalSoberNote: String = ""
-    
-    // Inject Managers for children
+    @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var globalSoberNote: String = "" 
+     
+    // Inject Managers for children 
     @Environment(LockdownManager.self) private var lockdownManager
     @Environment(ChallengeManager.self) private var challengeManager
     @Environment(StoreManager.self) private var storeManager
@@ -86,6 +86,11 @@ struct ContentView: View {
                 shared.set(false, forKey: "lockoutExpiredDeepLink")
                 showLockoutExpiredChallenge = true
                 notificationManager.registerNotificationCategories()
+            }
+            if let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend"),
+               shared.bool(forKey: "lockdownActiveDeepLink") {
+                shared.set(false, forKey: "lockdownActiveDeepLink")
+                // lockdownActiveDeepLink is handled by HomeView
             }
         }
     }

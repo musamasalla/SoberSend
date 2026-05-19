@@ -19,6 +19,7 @@ struct SoberSendApp: App {
     init() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
         NotificationManager.registerCategoriesOnce()
+        lockdownManager.notificationManager = notificationManager
     }
 
     @Environment(\.scenePhase) private var scenePhase

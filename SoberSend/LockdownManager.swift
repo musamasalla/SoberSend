@@ -20,6 +20,8 @@ class LockdownManager {
     @ObservationIgnored private lazy var sharedDefaults = UserDefaults(suiteName: appGroup) ?? UserDefaults.standard
     @ObservationIgnored private let selectionKey = "savedFamilyActivitySelection"
     
+    weak var notificationManager: NotificationManager?
+    
     var selectionToDiscourage = FamilyActivitySelection() {
         didSet {
             saveSelection()
@@ -156,6 +158,8 @@ class LockdownManager {
     func clearRestrictions() {
         store.clearAllSettings()
         DeviceActivityCenter().stopMonitoring([activityName])
+        // Cancel lockdown-related notifications
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["lockdown_active_reminder", "lock_start_reminder", "lock_end_reminder"])
     }
 
     // MARK: - Device Activity Monitoring (Background Enforcement)
@@ -182,6 +186,10 @@ class LockdownManager {
             try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
             print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
             deviceActivityErrorMessage = nil
+            
+            // Schedule the lockdown active reminder notification
+            notificationManager?.scheduleLockdownActiveReminder(at: startHour, minute: startMinute)
+            
             return true
         } catch let error as NSError where error.domain == "DeviceActivity" {
             let nsError = error

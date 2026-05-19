@@ -46,6 +46,9 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
                 case "lockout_expired":
                     sharedDefaults?.set(true, forKey: "lockoutExpiredDeepLink")
                     sharedDefaults?.set(true, forKey: "notificationDeepLink")
+                case "lockdown_active":
+                    sharedDefaults?.set(true, forKey: "lockdownActiveDeepLink")
+                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 case "morning_report":
                     sharedDefaults?.set(true, forKey: "morningReportDeepLink")
                     sharedDefaults?.set(true, forKey: "notificationDeepLink")
@@ -55,6 +58,9 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
             }
         case "DISMISS":
             break
+        case "VIEW_CONTACT_REMINDERS":
+            sharedDefaults?.set(true, forKey: "lockdownActiveDeepLink")
+            sharedDefaults?.set(true, forKey: "notificationDeepLink")
         default:
             break
         }

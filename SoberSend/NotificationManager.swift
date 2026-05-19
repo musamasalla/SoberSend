@@ -29,6 +29,34 @@ class NotificationManager: NSObject {
         }
     }
 
+    // MARK: - Lockdown Active Notification (Proactive)
+    /// Sends an immediate notification that lockdown is active, showing contact reminder count.
+    func sendLockdownActiveNotification(contactCount: Int) {
+        guard isAuthorized else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "🔒 Lockdown Active"
+        
+        if contactCount > 0 {
+            let contactText = contactCount == 1 ? "1 contact reminder" : "\(contactCount) contact reminders"
+            content.body = "Your lockdown is now protecting you. You have \(contactText) set. Open SoberSend to see them."
+        } else {
+            content.body = "Your lockdown is now active. Your selected apps are restricted until the lockdown ends."
+        }
+        
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.userInfo = ["action": "lockdown_active"]
+        content.categoryIdentifier = "LOCKDOWN_ACTIVE"
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: "lockdown_active", content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error { print("Error scheduling lockdown active notification: \(error)") }
+        }
+    }
+
     // MARK: - Notification Categories
     func registerNotificationCategories() {
         let challengeAction = UNNotificationAction(
@@ -67,10 +95,23 @@ class NotificationManager: NSObject {
             options: []
         )
 
+        let lockdownActiveAction = UNNotificationAction(
+            identifier: "VIEW_CONTACT_REMINDERS",
+            title: "View Contact Reminders",
+            options: [.foreground]
+        )
+        let lockdownActiveCategory = UNNotificationCategory(
+            identifier: "LOCKDOWN_ACTIVE",
+            actions: [lockdownActiveAction, dismissAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
         UNUserNotificationCenter.current().setNotificationCategories([
             unlockCategory,
             emergencyCategory,
-            lockoutExpiredCategory
+            lockoutExpiredCategory,
+            lockdownActiveCategory
         ])
     }
 
@@ -111,10 +152,23 @@ class NotificationManager: NSObject {
             options: []
         )
 
+        let lockdownActiveAction = UNNotificationAction(
+            identifier: "VIEW_CONTACT_REMINDERS",
+            title: "View Contact Reminders",
+            options: [.foreground]
+        )
+        let lockdownActiveCategory = UNNotificationCategory(
+            identifier: "LOCKDOWN_ACTIVE",
+            actions: [lockdownActiveAction, dismissAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
         UNUserNotificationCenter.current().setNotificationCategories([
             unlockCategory,
             emergencyCategory,
-            lockoutExpiredCategory
+            lockoutExpiredCategory,
+            lockdownActiveCategory
         ])
     }
 
@@ -183,8 +237,30 @@ class NotificationManager: NSObject {
 
     func cancelLockReminders() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: ["lock_start_reminder", "lock_end_reminder"]
+            withIdentifiers: ["lock_start_reminder", "lock_end_reminder", "lockdown_active"]
         )
+    }
+
+    // MARK: - Lockdown Active Scheduled Reminder
+    func scheduleLockdownActiveReminder(at hour: Int, minute: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = "🔒 Lockdown Active"
+        content.body = "Your lockdown is now active. Apps are restricted. Open SoberSend if you need to reach someone on your list."
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.categoryIdentifier = "LOCKDOWN_ACTIVE"
+        content.userInfo = ["action": "lockdown_active"]
+
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: "lockdown_active_reminder", content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error { print("Error scheduling lockdown active reminder: \(error)") }
+        }
     }
 
     // MARK: - Streak Celebration
@@ -311,6 +387,9 @@ class NotificationManager: NSObject {
             shared?.set(true, forKey: "notificationDeepLink")
         case "lockout_expired":
             shared?.set(true, forKey: "lockoutExpiredDeepLink")
+            shared?.set(true, forKey: "notificationDeepLink")
+        case "lockdown_active":
+            shared?.set(true, forKey: "lockdownActiveDeepLink")
             shared?.set(true, forKey: "notificationDeepLink")
         default:
             break

@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(StoreManager.self) private var storeManager
 
     @State private var activeTab = 0
+    @AppStorage("lockdownActiveDeepLink", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockdownActiveDeepLink: Bool = false
     @Namespace private var tabTransition
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -68,6 +69,12 @@ struct HomeView: View {
             }
 
             SoberTabBar(selectedTab: $activeTab)
+        }
+        .onAppear {
+            if lockdownActiveDeepLink {
+                lockdownActiveDeepLink = false
+                activeTab = 0 // Setup view
+            }
         }
     }
 }
