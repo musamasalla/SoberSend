@@ -237,35 +237,35 @@ SoberSend uses Apple's official Screen Time API to physically lock your selected
 
 4. PROVE YOU'RE SOBER TO UNLOCK
 Want back in? Pass a series of cognitive challenges:
-• 🧮 Math problems that scale in difficulty
-• 🎨 Color memory sequences you must repeat
-• 🗣️ Tongue twisters you have to say out loud
+• Math problems that scale in difficulty
+• Color memory sequences you must repeat
+• Tongue twisters you have to say out loud
 Easy when you're sober. Nearly impossible when you're not. That's the point.
 
 ━━━ FEATURES ━━━
 
-🛡️ REAL APP BLOCKING
+REAL APP BLOCKING
 Uses Apple's Screen Time API — the same technology behind parental controls. Apps are physically shielded, not just hidden.
 
-🧠 MULTI-STAGE CHALLENGES
+MULTI-STAGE CHALLENGES
 Four difficulty levels (Easy → Expert) with math, memory, and speech recognition tests. 10-minute lockout after failed attempts.
 
-📝 SOBER NOTES
+SOBER NOTES
 Write a message to your future self. We'll show it to you when you try to unlock. "You already texted him twice this week. Don't do it."
 
-📊 MORNING REPORT
+MORNING REPORT
 Wake up to a summary of what you avoided last night. See your streak, failed attempts, and disasters averted.
 
-🏆 ACHIEVEMENTS & STREAKS
+ACHIEVEMENTS & STREAKS
 Track consecutive sober nights. Earn badges: First Save, 7-Night Streak, 30-Night Streak, Survived Weekend, Ex-Free Zone.
 
-🔴 EMERGENCY UNLOCK
+EMERGENCY UNLOCK
 Genuine emergency? Face ID bypass with a 24-hour cooldown to prevent abuse.
 
-⌚ LIVE ACTIVITY
+LIVE ACTIVITY
 Real-time lockdown countdown in your Dynamic Island and Lock Screen. Always know when you're protected.
 
-📱 HOME WIDGET
+HOME WIDGET
 Glanceable lock status right on your home screen.
 
 ━━━ PRIVACY FIRST ━━━
