@@ -287,6 +287,7 @@ Yearly: $29.99/year
 — TERMS & PRIVACY —
 
 • Privacy Policy: https://musamasalla.github.io/SoberSend/privacy.html
+• Terms of Service: https://musamasalla.github.io/SoberSend/terms.html
 • Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 —
