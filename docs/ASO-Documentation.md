@@ -284,6 +284,11 @@ Premium unlocks: Unlimited apps & contacts, all challenge levels, full stats, mo
 • Monthly: $3.99/month (7-day free trial)
 • Yearly: $29.99/year
 
+━━━ TERMS & PRIVACY ━━━
+
+• Privacy Policy: https://musamasalla.github.io/SoberSend/privacy.html
+• Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 ━━━
 
 Your future self will thank you. Set up your lockdown tonight.
