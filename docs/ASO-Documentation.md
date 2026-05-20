@@ -224,31 +224,31 @@ We both know why you're here.
 
 Last night, you texted your ex. Or doom-scrolled until 3 AM. Or impulse-bought something you didn't need. SoberSend makes sure tonight is different.
 
-━━━ HOW IT WORKS ━━━
+— HOW IT WORKS —
 
 1. PICK YOUR TRIGGERS
 Select the apps and contacts you can't be trusted with after dark. Instagram, iMessage, dating apps, online shopping — whatever gets you in trouble.
 
 2. SET YOUR SCHEDULE
-Choose which nights and what hours to activate lockdown (default: 10 PM – 7 AM). Weekends only? Every night? You decide.
+Choose which nights and what hours to activate lockdown (default: 10 PM - 7 AM). Weekends only? Every night? You decide.
 
 3. APPS GET BLOCKED — FOR REAL
 SoberSend uses Apple's official Screen Time API to physically lock your selected apps. No workarounds. No "just this once."
 
 4. PROVE YOU'RE SOBER TO UNLOCK
 Want back in? Pass a series of cognitive challenges:
-• Math problems that scale in difficulty
-• Color memory sequences you must repeat
-• Tongue twisters you have to say out loud
+- Math problems that scale in difficulty
+- Color memory sequences you must repeat
+- Tongue twisters you have to say out loud
 Easy when you're sober. Nearly impossible when you're not. That's the point.
 
-━━━ FEATURES ━━━
+— FEATURES —
 
 REAL APP BLOCKING
 Uses Apple's Screen Time API — the same technology behind parental controls. Apps are physically shielded, not just hidden.
 
 MULTI-STAGE CHALLENGES
-Four difficulty levels (Easy → Expert) with math, memory, and speech recognition tests. 10-minute lockout after failed attempts.
+Four difficulty levels (Easy to Expert) with math, memory, and speech recognition tests. 10-minute lockout after failed attempts.
 
 SOBER NOTES
 Write a message to your future self. We'll show it to you when you try to unlock. "You already texted him twice this week. Don't do it."
@@ -268,28 +268,28 @@ Real-time lockdown countdown in your Dynamic Island and Lock Screen. Always know
 HOME WIDGET
 Glanceable lock status right on your home screen.
 
-━━━ PRIVACY FIRST ━━━
+— PRIVACY FIRST —
 
-• Zero data leaves your device — ever
-• No analytics, no tracking, no third-party SDKs
-• Speech recognition runs 100% on-device
-• All challenge history stored locally in SwiftData
-• We literally cannot see your data
+- Zero data leaves your device — ever
+- No analytics, no tracking, no third-party SDKs
+- Speech recognition runs 100% on-device
+- All challenge history stored locally
+- We literally cannot see your data
 
-━━━ PREMIUM ━━━
+— PREMIUM —
 
 Free tier: 1 app + 1 contact + Easy/Medium challenges
 Premium unlocks: Unlimited apps & contacts, all challenge levels, full stats, morning report sharing, all achievements.
 
-• Monthly: $3.99/month (7-day free trial)
-• Yearly: $29.99/year
+Monthly: $3.99/month (7-day free trial)
+Yearly: $29.99/year
 
-━━━ TERMS & PRIVACY ━━━
+— TERMS & PRIVACY —
 
 • Privacy Policy: https://musamasalla.github.io/SoberSend/privacy.html
 • Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
-━━━
+—
 
 Your future self will thank you. Set up your lockdown tonight.
 ```
