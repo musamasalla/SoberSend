@@ -218,10 +218,12 @@ struct PaywallView: View {
                 .font(SoberTheme.caption(10)).foregroundStyle(SoberTheme.textSecondary.opacity(0.6))
                 .multilineTextAlignment(.center).padding(.horizontal, 24)
 
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 Link("Privacy Policy", destination: URL(string: "https://musamasalla.github.io/SoberSend/privacy.html")!)
                 Text("·").foregroundStyle(SoberTheme.textSecondary.opacity(0.4))
                 Link("Terms of Service", destination: URL(string: "https://musamasalla.github.io/SoberSend/terms.html")!)
+                Text("·").foregroundStyle(SoberTheme.textSecondary.opacity(0.4))
+                Link("EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             }
             .font(SoberTheme.caption(10)).foregroundStyle(SoberTheme.textSecondary.opacity(0.6)).padding(.top, 4)
         }
