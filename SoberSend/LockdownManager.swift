@@ -16,6 +16,7 @@ class LockdownManager {
     // Shared constants
     private let appGroup = "group.com.musamasalla.SoberSend"
     private let activityName = DeviceActivityName("com.musamasalla.SoberSend.lockdownActivity")
+    private let deviceActivityCenter = DeviceActivityCenter()
     
     @ObservationIgnored private lazy var sharedDefaults = UserDefaults(suiteName: appGroup) ?? UserDefaults.standard
     @ObservationIgnored private let selectionKey = "savedFamilyActivitySelection"
@@ -157,7 +158,7 @@ class LockdownManager {
 
     func clearRestrictions() {
         store.clearAllSettings()
-        DeviceActivityCenter().stopMonitoring([activityName])
+        deviceActivityCenter.stopMonitoring([activityName])
         // Cancel lockdown-related notifications
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["lockdown_active_reminder", "lock_start_reminder", "lock_end_reminder"])
     }
@@ -183,7 +184,7 @@ class LockdownManager {
         )
         
         do {
-            try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
+            try deviceActivityCenter.startMonitoring(activityName, during: schedule)
             print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
             deviceActivityErrorMessage = nil
             

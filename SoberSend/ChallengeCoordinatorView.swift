@@ -178,6 +178,8 @@ struct ChallengeCoordinatorView: View {
     }
     
     private func activateLockout() {
+        // Invalidate previous timer to prevent multiple timers from running
+        lockoutTimer?.invalidate()
         // Increment consecutive failures
         consecutiveFailures += 1
         // Progressive penalty: 10 min base + 5 min per consecutive failure (max 30 min)
@@ -200,17 +202,23 @@ struct ChallengeCoordinatorView: View {
     }
     
     private func handleResult(passed: Bool, type: ChallengeType) {
-        let attempt = ChallengeAttempt(contactOrApp: contactOrAppName, passed: passed, challengeType: type, attemptNumber: currentStage + 1, unlockGranted: false)
+        let attempt = ChallengeAttempt(contactOrApp: contactOrAppName, passed: (passed), challengeType: type, attemptNumber: currentStage + 1, unlockGranted: false)
         modelContext.insert(attempt)
         if passed {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             currentStage += 1
-            if currentStage >= sequence.count { attempt.unlockGranted = true; try? modelContext.save(); onResult(true) }
-            // Reset consecutive failures on overall success
-            if currentStage >= sequence.count { consecutiveFailures = 0 }
+            if currentStage >= sequence.count {
+                attempt.unlockGranted = true
+                try? modelContext.save()
+                onResult(true)
+                consecutiveFailures = 0
+            } else {
+                try? modelContext.save()
+            }
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
-            try? modelContext.save(); activateLockout()
+            try? modelContext.save();
+            activateLockout()
         }
     }
 }

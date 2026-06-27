@@ -80,8 +80,14 @@ class ChallengeManager {
         request?.endAudio()
         recognitionTask?.cancel()
         
-        // Deactivate audio session
-        try? AVAudioSession.sharedInstance().setActive(false)
+        // Deactivate audio session only if we were recording
+        if isRecording {
+            do {
+                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            } catch {
+                // Audio session may already be inactive; ignore
+            }
+        }
         isRecording = false
     }
     

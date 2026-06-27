@@ -77,7 +77,8 @@ struct SetupView: View {
                         showPaywall = true
                     } else {
                         let displayName = CNContactFormatter.string(from: contact, style: .fullName) ?? "Unknown Contact"
-                        let newContact = LockedContact(contactID: contact.identifier, displayName: displayName)
+                        let phoneNumber = contact.phoneNumbers.first?.value.stringValue
+                        let newContact = LockedContact(contactID: contact.identifier, displayName: displayName, phoneNumber: phoneNumber)
                         modelContext.insert(newContact)
                         try? modelContext.save()
                     }

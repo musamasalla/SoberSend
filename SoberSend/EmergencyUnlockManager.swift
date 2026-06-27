@@ -2,6 +2,7 @@ import LocalAuthentication
 import Foundation
 import SwiftUI
 
+@MainActor
 @Observable
 class EmergencyUnlockManager {
     var isEmergencyUnlocked: Bool = false
@@ -9,7 +10,9 @@ class EmergencyUnlockManager {
     var emergencyCooldownEndTime: Date? = nil {
         didSet {
             if let date = emergencyCooldownEndTime {
-                UserDefaults(suiteName: "group.com.musamasalla.SoberSend")?.set(date.timeIntervalSince1970, forKey: "emergencyCooldownEndTime")
+                sharedDefaults.set(date.timeIntervalSince1970, forKey: "emergencyCooldownEndTime")
+            } else {
+                sharedDefaults.removeObject(forKey: "emergencyCooldownEndTime")
             }
         }
     }
@@ -17,14 +20,41 @@ class EmergencyUnlockManager {
     // 5 minute unlock, 24 hour cooldown after use
     private let unlockDuration: TimeInterval = 5 * 60
     private let cooldownDuration: TimeInterval = 24 * 60 * 60
-    private var unlockTimer: Timer?
+    private var unlockTask: Task<Void, Never>?
+    @ObservationIgnored private var sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") ?? UserDefaults.standard
     
     init() {
-        let timestamp = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")?.double(forKey: "emergencyCooldownEndTime") ?? 0
-        if timestamp > 0 {
-            let date = Date(timeIntervalSince1970: timestamp)
+        let cooldownTimestamp = sharedDefaults.double(forKey: "emergencyCooldownEndTime")
+        if cooldownTimestamp > 0 {
+            let date = Date(timeIntervalSince1970: cooldownTimestamp)
             if date > Date() {
                 self.emergencyCooldownEndTime = date
+            } else {
+                sharedDefaults.removeObject(forKey: "emergencyCooldownEndTime")
+            }
+        }
+        
+        // Restore emergency unlock state if still within unlock window
+        let unlockTimestamp = sharedDefaults.double(forKey: "emergencyUnlockEndTime")
+        if unlockTimestamp > 0 {
+            let unlockDate = Date(timeIntervalSince1970: unlockTimestamp)
+            if unlockDate > Date() {
+                self.emergencyUnlockEndTime = unlockDate
+                self.isEmergencyUnlocked = true
+                // Schedule the auto-reset task when restoring from persistence
+                let remaining = unlockDate.timeIntervalSince(Date())
+                if remaining > 0 {
+                    unlockTask?.cancel()
+                    unlockTask = Task { [weak self] in
+                        try? await Task.sleep(for: .seconds(remaining))
+                        guard let self, !Task.isCancelled else { return }
+                        self.isEmergencyUnlocked = false
+                        self.emergencyUnlockEndTime = nil
+                        self.sharedDefaults.removeObject(forKey: "emergencyUnlockEndTime")
+                    }
+                }
+            } else {
+                sharedDefaults.removeObject(forKey: "emergencyUnlockEndTime")
             }
         }
     }
@@ -40,31 +70,20 @@ class EmergencyUnlockManager {
         let context = LAContext()
         var error: NSError?
         
-        // Check if biometric authentication is possible
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            let reason = "Authenticate to trigger Emergency Unlock (5 minutes)."
-            
-            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
-                DispatchQueue.main.async {
-                    if success {
-                        self.activateEmergencyUnlock()
-                        completion(true, nil)
-                    } else {
-                        completion(false, authenticationError?.localizedDescription ?? "Authentication failed.")
-                    }
-                }
-            }
-        } else {
-            // Fallback to passcode if biometrics aren't available
-            let reason = "Authenticate with passcode to trigger Emergency Unlock."
-            context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, authenticationError in
-                DispatchQueue.main.async {
-                    if success {
-                        self.activateEmergencyUnlock()
-                        completion(true, nil)
-                    } else {
-                        completion(false, authenticationError?.localizedDescription ?? "Authentication failed.")
-                    }
+        // Determine which authentication policy to use
+        let canUseBiometrics = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        let policy: LAPolicy = canUseBiometrics ? .deviceOwnerAuthenticationWithBiometrics : .deviceOwnerAuthentication
+        let reason = canUseBiometrics 
+            ? "Authenticate to trigger Emergency Unlock (5 minutes)."
+            : "Authenticate with passcode to trigger Emergency Unlock."
+        
+        context.evaluatePolicy(policy, localizedReason: reason) { [weak self] success, authenticationError in
+            DispatchQueue.main.async {
+                if success {
+                    self?.activateEmergencyUnlock()
+                    completion(true, nil)
+                } else {
+                    completion(false, authenticationError?.localizedDescription ?? "Authentication failed.")
                 }
             }
         }
@@ -72,21 +91,27 @@ class EmergencyUnlockManager {
     
     private func activateEmergencyUnlock() {
         let now = Date()
+        let unlockEndTime = now.addingTimeInterval(unlockDuration)
+        let cooldownEndTime = now.addingTimeInterval(cooldownDuration)
+        
         isEmergencyUnlocked = true
-        emergencyUnlockEndTime = now.addingTimeInterval(unlockDuration)
-        emergencyCooldownEndTime = now.addingTimeInterval(cooldownDuration)
+        self.emergencyUnlockEndTime = unlockEndTime
+        self.emergencyCooldownEndTime = cooldownEndTime
         
-        // Cancel old timer if any
-        unlockTimer?.invalidate()
+        // Persist unlock end time for crash/recovery scenarios
+        sharedDefaults.set(unlockEndTime.timeIntervalSince1970, forKey: "emergencyUnlockEndTime")
+        sharedDefaults.set(cooldownEndTime.timeIntervalSince1970, forKey: "emergencyCooldownEndTime")
         
-        // Auto-lock after duration
-        unlockTimer = Timer.scheduledTimer(withTimeInterval: unlockDuration, repeats: false) { [weak self] _ in
-            // Bind local non-optional copy to avoid 'self' capture in Task
-            guard let strongSelf = self else { return }
-            Task { @MainActor in
-                strongSelf.isEmergencyUnlocked = false
-                strongSelf.emergencyUnlockEndTime = nil
-            }
+        // Cancel any existing unlock task
+        unlockTask?.cancel()
+        
+        // Auto-lock after duration using modern concurrency
+        unlockTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(unlockDuration))
+            guard let self, !Task.isCancelled else { return }
+            self.isEmergencyUnlocked = false
+            self.emergencyUnlockEndTime = nil
+            self.sharedDefaults.removeObject(forKey: "emergencyUnlockEndTime")
         }
     }
 }
