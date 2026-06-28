@@ -106,7 +106,7 @@ class EmergencyUnlockManager {
         unlockTask?.cancel()
         
         // Auto-lock after duration using modern concurrency
-        unlockTask = Task { [weak self] in
+        unlockTask = Task { [weak self, unlockDuration] in
             try? await Task.sleep(for: .seconds(unlockDuration))
             guard let self, !Task.isCancelled else { return }
             self.isEmergencyUnlocked = false
