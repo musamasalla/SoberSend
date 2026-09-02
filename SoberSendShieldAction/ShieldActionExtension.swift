@@ -22,7 +22,7 @@ class ShieldActionExtension: ShieldActionDelegate {
         let content = UNMutableNotificationContent()
         content.title = isEmergency ? "🚨 Emergency Unlock" : "🔒 App Locked"
         content.body = isEmergency ? "Tap to access your emergency bypass." : "Want in? Prove you're sober first. Tap to take the challenge."
-        content.sound = isEmergency ? .defaultCritical : .default
+        content.sound = .default
         content.userInfo = ["action": isEmergency ? "emergency_unlock" : "app_unlock_challenge"]
         content.categoryIdentifier = "APP_UNLOCK"
         

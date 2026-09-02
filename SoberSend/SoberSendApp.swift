@@ -93,7 +93,8 @@ struct SoberSendApp: App {
         guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
         shared.set(false, forKey: "notificationDeepLink")
         shared.set(false, forKey: "lockoutExpiredDeepLink")
-        shared.set(false, forKey: "morningReportDeepLink")
+        // morningReportDeepLink and lockdownActiveDeepLink stay set here;
+        // HomeView.onAppear consumes them to switch tabs after onboarding.
     }
 
     private func startLiveActivityIfNeeded() {

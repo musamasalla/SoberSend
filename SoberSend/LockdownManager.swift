@@ -93,6 +93,12 @@ class LockdownManager {
         lastBlockingState = isAppBlockingActive()
         refreshLiveActivityState()
 
+        // init() assignments bypass didSet, so reconcile shield state with
+        // the actual schedule on every launch: lifts stale shields if the
+        // window ended while the app was closed, and re-applies them if the
+        // window is already underway.
+        setShieldRestrictions()
+
         // Load bypass if still valid
         let bypassTimestamp = sharedDefaults.double(forKey: bypassKey)
         if bypassTimestamp > 0 {
@@ -140,17 +146,22 @@ class LockdownManager {
              store.shield.applications = selectionToDiscourage.applicationTokens.isEmpty ? nil : selectionToDiscourage.applicationTokens
              store.shield.applicationCategories = selectionToDiscourage.categoryTokens.isEmpty ? nil : ShieldSettings.ActivityCategoryPolicy.specific(selectionToDiscourage.categoryTokens)
              store.shield.webDomains = selectionToDiscourage.webDomainTokens.isEmpty ? nil : selectionToDiscourage.webDomainTokens
-              
-             // Register with OS for background enforcement
+         } else {
+             store.clearAllSettings()
+         }
+
+         // Keep the OS schedule registered whenever a schedule is configured,
+         // even when shields are currently off — the DeviceActivityMonitor
+         // extension re-applies them at the next window start. Stopping
+         // monitoring here would silently cancel the nightly lock.
+         if isAuthorized && !selectionToDiscourage.applicationTokens.isEmpty {
              let started = startDeviceActivityMonitoring()
              if !started {
                  print("⚠️ Warning: Could not start DeviceActivity monitoring. User may need to enable Screen Time.")
-                 // The error message is set by startDeviceActivityMonitoring() itself
              } else {
-                 // All clear — monitoring is running
                  deviceActivityErrorMessage = nil
              }
-         } else {
+         } else if selectionToDiscourage.applicationTokens.isEmpty {
              clearRestrictions()
              deviceActivityErrorMessage = nil
          }
@@ -161,6 +172,13 @@ class LockdownManager {
         deviceActivityCenter.stopMonitoring([activityName])
         // Cancel lockdown-related notifications
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["lockdown_active_reminder", "lock_start_reminder", "lock_end_reminder"])
+    }
+
+    /// Clears shield restrictions without unregistering the OS schedule, for
+    /// times (e.g. outside the lock window) when shields must lift but the
+    /// nightly schedule still needs to fire tomorrow.
+    func clearShieldsOnly() {
+        store.clearAllSettings()
     }
 
     // MARK: - Device Activity Monitoring (Background Enforcement)

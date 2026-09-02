@@ -14,7 +14,7 @@ class NotificationManager: NSObject {
     // MARK: - Authorization
     func requestAuthorization() async {
         do {
-            let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound, .criticalAlert])
+            let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
             isAuthorized = granted
         } catch {
             print("Error requesting notification authorization: \(error)")
@@ -295,7 +295,7 @@ class NotificationManager: NSObject {
         let content = UNMutableNotificationContent()
         content.title = "App Locked"
         content.body = "Want in? Prove you're sober first. Tap to take the challenge."
-        content.sound = .defaultCritical
+        content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.userInfo = ["action": "app_unlock_challenge"]
         content.categoryIdentifier = "APP_UNLOCK"
@@ -316,7 +316,7 @@ class NotificationManager: NSObject {
         let content = UNMutableNotificationContent()
         content.title = "Emergency Override Available"
         content.body = "You can request an emergency unlock, no challenge required."
-        content.sound = .defaultCritical
+        content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.userInfo = ["action": "app_unlock_emergency"]
         content.categoryIdentifier = "EMERGENCY_UNLOCK"

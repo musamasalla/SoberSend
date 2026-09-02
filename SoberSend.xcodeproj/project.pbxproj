@@ -14,7 +14,8 @@
 		E85C3E5B2F503C9600BE5BC3 /* SoberSendShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E85C3E522F503C9600BE5BC3 /* SoberSendShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E8B674C72F501D420055480D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E8B674C62F501D410055480D /* WidgetKit.framework */; };
 		E8B674C92F501D420055480D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E8B674C82F501D420055480D /* SwiftUI.framework */; };
-		E8B674D42F501D4B0055480D /* SoberSendWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8B674C42F501D410055480D /* SoberSendWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+			E8B674D42F501D4B0055480D /* SoberSendWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8B674C42F501D410055480D /* SoberSendWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+			E9A1F5032F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E9A1F5022F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +40,13 @@
 			remoteGlobalIDString = E8B674C32F501D410055480D;
 			remoteInfo = SoberSendWidgetExtension;
 		};
+		E9A1F5052F600B5100ABCDEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E81F4E302F501269008DF02C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E9A1F5012F600B5100ABCDEF;
+			remoteInfo = SoberSendDeviceActivityMonitor;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,11 +55,12 @@
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
-			files = (
-				E8B674D42F501D4B0055480D /* SoberSendWidgetExtension.appex in Embed Foundation Extensions */,
-				E85C3E5B2F503C9600BE5BC3 /* SoberSendShieldAction.appex in Embed Foundation Extensions */,
-				E85C3E492F503C6E00BE5BC3 /* SoberSendShieldConfig.appex in Embed Foundation Extensions */,
-			);
+				files = (
+					E8B674D42F501D4B0055480D /* SoberSendWidgetExtension.appex in Embed Foundation Extensions */,
+					E85C3E5B2F503C9600BE5BC3 /* SoberSendShieldAction.appex in Embed Foundation Extensions */,
+					E85C3E492F503C6E00BE5BC3 /* SoberSendShieldConfig.appex in Embed Foundation Extensions */,
+					E9A1F5032F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex in Embed Foundation Extensions */,
+				);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,6 +73,7 @@
 		E85C3E402F503C6E00BE5BC3 /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
 		E85C3E522F503C9600BE5BC3 /* SoberSendShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SoberSendShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8B674C42F501D410055480D /* SoberSendWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SoberSendWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9A1F5022F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SoberSendDeviceActivityMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8B674C62F501D410055480D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E8B674C82F501D420055480D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -96,6 +106,13 @@
 				Info.plist,
 			);
 			target = E8B674C32F501D410055480D /* SoberSendWidgetExtension */;
+		};
+		E9A1F5062F600B5100ABCDEF /* Exceptions for "SoberSendDeviceActivityMonitor" folder in "SoberSendDeviceActivityMonitor" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E9A1F5012F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -130,6 +147,14 @@
 				E8B674D92F501D4B0055480D /* Exceptions for "SoberSendWidget" folder in "SoberSendWidgetExtension" target */,
 			);
 			path = SoberSendWidget;
+			sourceTree = "<group>";
+		};
+		E9A1F5072F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E9A1F5062F600B5100ABCDEF /* Exceptions for "SoberSendDeviceActivityMonitor" folder in "SoberSendDeviceActivityMonitor" target */,
+			);
+			path = SoberSendDeviceActivityMonitor;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -178,6 +203,7 @@
 				E8B674CA2F501D420055480D /* SoberSendWidget */,
 				E85C3E422F503C6E00BE5BC3 /* SoberSendShieldConfig */,
 				E85C3E542F503C9600BE5BC3 /* SoberSendShieldAction */,
+				E9A1F5072F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */,
 				E8B674C52F501D410055480D /* Frameworks */,
 				E81F4E392F501269008DF02C /* Products */,
 			);
@@ -190,6 +216,7 @@
 				E8B674C42F501D410055480D /* SoberSendWidgetExtension.appex */,
 				E85C3E3D2F503C6D00BE5BC3 /* SoberSendShieldConfig.appex */,
 				E85C3E522F503C9600BE5BC3 /* SoberSendShieldAction.appex */,
+				E9A1F5022F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -223,6 +250,7 @@
 				E8B674D32F501D4B0055480D /* PBXTargetDependency */,
 				E85C3E482F503C6E00BE5BC3 /* PBXTargetDependency */,
 				E85C3E5A2F503C9600BE5BC3 /* PBXTargetDependency */,
+				E9A1F50C2F600B5100ABCDEF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				E81F4E3A2F501269008DF02C /* SoberSend */,
@@ -292,6 +320,26 @@
 			productReference = E8B674C42F501D410055480D /* SoberSendWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		E9A1F5012F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E9A1F50A2F600B5100ABCDEF /* Build configuration list for PBXNativeTarget "SoberSendDeviceActivityMonitor" */;
+			buildPhases = (
+				E9A1F5082F600B5100ABCDEF /* Sources */,
+				E9A1F5092F600B5100ABCDEF /* Frameworks */,
+				E9A1F50B2F600B5100ABCDEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E9A1F5072F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */,
+			);
+			name = SoberSendDeviceActivityMonitor;
+			productName = SoberSendDeviceActivityMonitor;
+			productReference = E9A1F5022F600B5100ABCDEF /* SoberSendDeviceActivityMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -314,6 +362,9 @@
 					E8B674C32F501D410055480D = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					E9A1F5012F600B5100ABCDEF = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = E81F4E332F501269008DF02C /* Build configuration list for PBXProject "SoberSend" */;
@@ -334,6 +385,7 @@
 				E8B674C32F501D410055480D /* SoberSendWidgetExtension */,
 				E85C3E3C2F503C6D00BE5BC3 /* SoberSendShieldConfig */,
 				E85C3E512F503C9600BE5BC3 /* SoberSendShieldAction */,
+				E9A1F5012F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -361,6 +413,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E8B674C22F501D410055480D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E9A1F50B2F600B5100ABCDEF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -398,6 +457,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E9A1F5082F600B5100ABCDEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E9A1F5092F600B5100ABCDEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -416,6 +489,11 @@
 			target = E8B674C32F501D410055480D /* SoberSendWidgetExtension */;
 			targetProxy = E8B674D22F501D4B0055480D /* PBXContainerItemProxy */;
 		};
+		E9A1F50C2F600B5100ABCDEF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E9A1F5012F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */;
+			targetProxy = E9A1F5052F600B5100ABCDEF /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -427,7 +505,7 @@
 				CODE_SIGN_ENTITLEMENTS = SoberSend/SoberSend.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -442,7 +520,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -468,7 +546,7 @@
 				CODE_SIGN_ENTITLEMENTS = SoberSend/SoberSend.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -483,7 +561,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -629,7 +707,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldConfig/SoberSendShieldConfig.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldConfig/Info.plist;
@@ -641,7 +719,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendShieldConfig;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -663,7 +741,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldConfig/SoberSendShieldConfig.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldConfig/Info.plist;
@@ -675,7 +753,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendShieldConfig;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -697,7 +775,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldAction/SoberSendShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldAction/Info.plist;
@@ -709,7 +787,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendShieldAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -731,7 +809,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldAction/SoberSendShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldAction/Info.plist;
@@ -743,7 +821,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendShieldAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -767,7 +845,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SoberSendWidget/SoberSendWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendWidget/Info.plist;
@@ -779,7 +857,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -803,7 +881,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SoberSendWidget/SoberSendWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendWidget/Info.plist;
@@ -815,8 +893,76 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E9A1F50D2F600B5100ABCDEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SoberSendDeviceActivityMonitor/SoberSendDeviceActivityMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 9Q4TV94VR7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SoberSendDeviceActivityMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SoberSendDeviceActivityMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendDeviceActivityMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E9A1F50E2F600B5100ABCDEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SoberSendDeviceActivityMonitor/SoberSendDeviceActivityMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 9Q4TV94VR7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SoberSendDeviceActivityMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SoberSendDeviceActivityMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.musamasalla.SoberSend.SoberSendDeviceActivityMonitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -876,6 +1022,15 @@
 			buildConfigurations = (
 				E8B674D62F501D4B0055480D /* Debug */,
 				E8B674D72F501D4B0055480D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E9A1F50A2F600B5100ABCDEF /* Build configuration list for PBXNativeTarget "SoberSendDeviceActivityMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9A1F50D2F600B5100ABCDEF /* Debug */,
+				E9A1F50E2F600B5100ABCDEF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

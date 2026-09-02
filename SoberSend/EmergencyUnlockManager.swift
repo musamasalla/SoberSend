@@ -16,6 +16,10 @@ class EmergencyUnlockManager {
             }
         }
     }
+
+    /// Count of emergency unlocks recorded on this device, for the
+    /// "SoberSend logs all emergency unlocks" disclosure in the UI.
+    var emergencyUnlockCount: Int = 0
     
     // 5 minute unlock, 24 hour cooldown after use
     private let unlockDuration: TimeInterval = 5 * 60
@@ -33,6 +37,8 @@ class EmergencyUnlockManager {
                 sharedDefaults.removeObject(forKey: "emergencyCooldownEndTime")
             }
         }
+
+        emergencyUnlockCount = (sharedDefaults.array(forKey: "emergencyUnlockLog") as? [TimeInterval])?.count ?? 0
         
         // Restore emergency unlock state if still within unlock window
         let unlockTimestamp = sharedDefaults.double(forKey: "emergencyUnlockEndTime")
@@ -93,14 +99,22 @@ class EmergencyUnlockManager {
         let now = Date()
         let unlockEndTime = now.addingTimeInterval(unlockDuration)
         let cooldownEndTime = now.addingTimeInterval(cooldownDuration)
-        
+
         isEmergencyUnlocked = true
         self.emergencyUnlockEndTime = unlockEndTime
         self.emergencyCooldownEndTime = cooldownEndTime
-        
+
         // Persist unlock end time for crash/recovery scenarios
         sharedDefaults.set(unlockEndTime.timeIntervalSince1970, forKey: "emergencyUnlockEndTime")
         sharedDefaults.set(cooldownEndTime.timeIntervalSince1970, forKey: "emergencyCooldownEndTime")
+
+        // Record the event so the "logs all emergency unlocks" promise is kept.
+        var log = sharedDefaults.array(forKey: "emergencyUnlockLog") as? [TimeInterval] ?? []
+        log.append(now.timeIntervalSince1970)
+        // Keep the most recent 50 events; anything older isn't actionable.
+        if log.count > 50 { log.removeFirst(log.count - 50) }
+        sharedDefaults.set(log, forKey: "emergencyUnlockLog")
+        emergencyUnlockCount = log.count
         
         // Cancel any existing unlock task
         unlockTask?.cancel()

@@ -13,33 +13,48 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let sharedDefaults = UserDefaults(suiteName: "group.com.musamasalla.SoberSend")
-        let startHour = sharedDefaults?.integer(forKey: "lockStartHour") ?? 22
+        let startHour = sharedDefaults?.integer(forKey: "lockStartHour") ?? 0
         let startMinute = sharedDefaults?.integer(forKey: "lockStartMinute") ?? 0
-        let endHour = sharedDefaults?.integer(forKey: "lockEndHour") ?? 7
+        let endHour = sharedDefaults?.integer(forKey: "lockEndHour") ?? 0
         let endMinute = sharedDefaults?.integer(forKey: "lockEndMinute") ?? 0
         let isManuallyActive = sharedDefaults?.bool(forKey: "isManuallyActive") ?? false
-        
+        // An absent mask means "never configured" — treat it as no days active.
+        let activeDaysMask = sharedDefaults?.object(forKey: "activeDaysMask") == nil ? 0 : sharedDefaults!.integer(forKey: "activeDaysMask")
+
         let now = Date()
         let calendar = Calendar.current
-        
+
         let startHStr = String(format: "%02d", startHour)
         let startMStr = String(format: "%02d", startMinute)
         let endHStr = String(format: "%02d", endHour)
         let endMStr = String(format: "%02d", endMinute)
-        
+
         let startTimeString = "\(startHStr):\(startMStr)"
         let endTimeString = "\(endHStr):\(endMStr)"
-        
+
+        // Honor the day-of-week schedule — the same rule the app applies.
+        func isDayActive(_ weekday: Int) -> Bool {
+            (activeDaysMask & (1 << (weekday - 1))) != 0
+        }
+
         var isLocked = isManuallyActive
-        if !isLocked, let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
+        if !isLocked, activeDaysMask > 0, isDayActive(calendar.component(.weekday, from: now)),
+           let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
            let endToday = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: now) {
             if startToday > endToday {
-                if now >= startToday || now <= endToday { isLocked = true }
+                // Overnight window: after midnight only counts if yesterday was
+                // an active day too.
+                let yesterdayWeekday = calendar.component(.weekday, from: calendar.date(byAdding: .day, value: -1, to: now) ?? now)
+                if now >= startToday {
+                    isLocked = true
+                } else if now <= endToday, isDayActive(yesterdayWeekday) {
+                    isLocked = true
+                }
             } else {
                 if now >= startToday && now <= endToday { isLocked = true }
             }
         }
-        
+
         let entry = SimpleEntry(date: now, isLocked: isLocked, start: startTimeString, end: endTimeString)
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: now)!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))

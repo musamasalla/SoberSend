@@ -7,6 +7,7 @@ struct HomeView: View {
 
     @State private var activeTab = 0
     @AppStorage("lockdownActiveDeepLink", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var lockdownActiveDeepLink: Bool = false
+    @AppStorage("morningReportDeepLink", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var morningReportDeepLink: Bool = false
     @Namespace private var tabTransition
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -71,9 +72,20 @@ struct HomeView: View {
             SoberTabBar(selectedTab: $activeTab)
         }
         .onAppear {
-            if lockdownActiveDeepLink {
+            if morningReportDeepLink {
+                morningReportDeepLink = false
+                activeTab = 1 // Morning Report
+            } else if lockdownActiveDeepLink {
                 lockdownActiveDeepLink = false
                 activeTab = 0 // Setup view
+            }
+        }
+        .onChange(of: morningReportDeepLink) { _, triggered in
+            // Cold-launch path: the notification tap can land after
+            // HomeView.onAppear has already run.
+            if triggered {
+                morningReportDeepLink = false
+                activeTab = 1
             }
         }
     }

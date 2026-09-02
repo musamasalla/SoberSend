@@ -33,7 +33,9 @@ struct EmergencyUnlockView: View {
                     
                     HStack(spacing: 10) {
                         Image(systemName: "exclamationmark.circle.fill").foregroundStyle(SoberTheme.peachText)
-                        Text("This is for genuine emergencies only. SoberSend logs all emergency unlocks.")
+                        Text(emergencyManager.emergencyUnlockCount == 0
+                             ? "This is for genuine emergencies only. SoberSend logs all emergency unlocks."
+                             : "This is for genuine emergencies only. SoberSend logs all emergency unlocks — \(emergencyManager.emergencyUnlockCount) recorded so far.")
                             .font(SoberTheme.caption()).foregroundStyle(SoberTheme.peachText)
                     }
                     .padding(14)
