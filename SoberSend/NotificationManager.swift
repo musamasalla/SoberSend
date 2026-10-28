@@ -197,70 +197,107 @@ class NotificationManager: NSObject {
     }
 
     // MARK: - Lock Window Reminders
-    func scheduleLockStartReminder(at hour: Int, minute: Int) {
-        let content = UNMutableNotificationContent()
-        content.title = "Lockdown starting soon"
-        content.body = "Your apps will be restricted in 15 minutes. Finish up and save your work."
-        content.sound = .default
-        content.categoryIdentifier = "LOCK_START"
 
-        var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = max(0, minute - 15)
+    /// Identifier prefixes for the repeating lock-window reminders. Each one is
+    /// scheduled once per active weekday with the weekday appended.
+    private let lockReminderPrefixes = [
+        "lock_start_reminder",
+        "lock_end_reminder",
+        "lockdown_active_reminder"
+    ]
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(identifier: "lock_start_reminder", content: content, trigger: trigger)
+    /// Re-schedules all lock-window reminders to match the current schedule.
+    ///
+    /// One repeating request is registered per active weekday (identifiers
+    /// suffixed with the weekday), so reminders only fire on nights the user
+    /// actually selected. Previously these reminders were never scheduled at
+    /// all: the methods existed but had no callers.
+    func syncLockReminders(startHour: Int, startMinute: Int, endHour: Int, endMinute: Int, daysMask: Int) {
+        cancelLockReminders()
+        guard isAuthorized else { return }
 
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error { print("Error scheduling lock start reminder: \(error)") }
+        for weekday in 1...7 where (daysMask & (1 << (weekday - 1))) != 0 {
+            scheduleLockReminder(
+                id: "lock_start_reminder_\(weekday)",
+                title: "Lockdown starting soon",
+                body: "Your apps will be restricted in 15 minutes. Finish up and save your work.",
+                categoryIdentifier: "LOCK_START",
+                hour: startHour, minute: startMinute,
+                offsetMinutes: -15,
+                weekday: weekday
+            )
+            scheduleLockReminder(
+                id: "lockdown_active_reminder_\(weekday)",
+                title: "🔒 Lockdown Active",
+                body: "Your lockdown is now active. Apps are restricted. Open SoberSend if you need to reach someone on your list.",
+                categoryIdentifier: "LOCKDOWN_ACTIVE",
+                hour: startHour, minute: startMinute,
+                offsetMinutes: 0,
+                weekday: weekday,
+                isTimeSensitive: true,
+                action: "lockdown_active"
+            )
+            scheduleLockReminder(
+                id: "lock_end_reminder_\(weekday)",
+                title: "Good morning!",
+                body: "Your lockdown has ended. Stay strong today.",
+                categoryIdentifier: "LOCK_END",
+                hour: endHour, minute: endMinute,
+                offsetMinutes: 0,
+                weekday: weekday
+            )
         }
     }
 
-    func scheduleLockEndReminder(at hour: Int, minute: Int) {
+    private func scheduleLockReminder(
+        id: String,
+        title: String,
+        body: String,
+        categoryIdentifier: String,
+        hour: Int,
+        minute: Int,
+        offsetMinutes: Int,
+        weekday: Int,
+        isTimeSensitive: Bool = false,
+        action: String? = nil
+    ) {
         let content = UNMutableNotificationContent()
-        content.title = "Good morning!"
-        content.body = "Your lockdown has ended. Stay strong today."
+        content.title = title
+        content.body = body
         content.sound = .default
-        content.categoryIdentifier = "LOCK_END"
+        if isTimeSensitive { content.interruptionLevel = .timeSensitive }
+        if let action { content.userInfo = ["action": action] }
+        content.categoryIdentifier = categoryIdentifier
 
         var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = minute
+        // Offset rolls the hour backwards when needed (e.g. a 00:30 lock warns
+        // at 00:15 the previous day) — clamping the minute alone used to fire
+        // the warning after the lock had already started.
+        let totalMinutes = (hour * 60 + minute + offsetMinutes + 24 * 60) % (24 * 60)
+        dateComponents.hour = totalMinutes / 60
+        dateComponents.minute = totalMinutes % 60
+        dateComponents.weekday = weekday
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(identifier: "lock_end_reminder", content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
 
         UNUserNotificationCenter.current().add(request) { error in
-            if let error { print("Error scheduling lock end reminder: \(error)") }
+            if let error { print("Error scheduling \(id) reminder: \(error)") }
         }
     }
 
+    /// Removes every lock-window reminder, including the legacy unsuffixed
+    /// identifiers older builds registered.
     func cancelLockReminders() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: ["lock_start_reminder", "lock_end_reminder", "lockdown_active"]
-        )
-    }
-
-    // MARK: - Lockdown Active Scheduled Reminder
-    func scheduleLockdownActiveReminder(at hour: Int, minute: Int) {
-        let content = UNMutableNotificationContent()
-        content.title = "🔒 Lockdown Active"
-        content.body = "Your lockdown is now active. Apps are restricted. Open SoberSend if you need to reach someone on your list."
-        content.sound = .default
-        content.interruptionLevel = .timeSensitive
-        content.categoryIdentifier = "LOCKDOWN_ACTIVE"
-        content.userInfo = ["action": "lockdown_active"]
-
-        var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = minute
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(identifier: "lockdown_active_reminder", content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error { print("Error scheduling lockdown active reminder: \(error)") }
+        var identifiers = [String]()
+        for prefix in lockReminderPrefixes {
+            identifiers.append(prefix)
+            for weekday in 1...7 {
+                identifiers.append("\(prefix)_\(weekday)")
+            }
         }
+        identifiers.append("lockdown_active")
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     // MARK: - Streak Celebration
