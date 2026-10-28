@@ -23,8 +23,11 @@ class ShieldActionExtension: ShieldActionDelegate {
         content.title = isEmergency ? "🚨 Emergency Unlock" : "🔒 App Locked"
         content.body = isEmergency ? "Tap to access your emergency bypass." : "Want in? Prove you're sober first. Tap to take the challenge."
         content.sound = .default
-        content.userInfo = ["action": isEmergency ? "emergency_unlock" : "app_unlock_challenge"]
-        content.categoryIdentifier = "APP_UNLOCK"
+        // Action identifiers must match the cases handled by
+        // AppNotificationDelegate.userNotificationCenter(_:didReceive:) —
+        // "emergency_unlock" silently did nothing when tapped.
+        content.userInfo = ["action": isEmergency ? "app_unlock_emergency" : "app_unlock_challenge"]
+        content.categoryIdentifier = isEmergency ? "EMERGENCY_UNLOCK" : "APP_UNLOCK"
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
         let identifier = isEmergency ? "emergency_request" : "shield_unlock"

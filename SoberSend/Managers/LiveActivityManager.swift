@@ -28,6 +28,11 @@ final class LiveActivityManager {
             return
         }
 
+        // A previous app session may have left a Live Activity running (e.g. the
+        // app was killed mid-lockdown). `currentActivity` is nil after relaunch,
+        // so without this the stale activity stays on the Lock Screen forever.
+        Task { await endOrphanedActivities() }
+
         let attributes = LockdownActivityAttributes(
             scheduleStartTime: startTime,
             scheduleEndTime: endTime
@@ -124,5 +129,21 @@ final class LiveActivityManager {
         }
         currentActivity = nil
         isActivityRunning = false
+    }
+
+    /// Ends Live Activities this instance doesn't own — leftovers from a
+    /// previous app session that was terminated before the activity was ended.
+    func endOrphanedActivities() async {
+        guard currentActivity == nil else { return }
+        for activity in Activity<LockdownActivityAttributes>.activities {
+            let finalState = LockdownActivityAttributes.ContentState(
+                lockEndTime: Date(),
+                isInLockWindow: false,
+                lockedAppsCount: activity.content.state.lockedAppsCount,
+                streakNights: activity.content.state.streakNights
+            )
+            let content = ActivityContent(state: finalState, staleDate: nil, relevanceScore: 0)
+            await activity.end(content, dismissalPolicy: .immediate)
+        }
     }
 }
