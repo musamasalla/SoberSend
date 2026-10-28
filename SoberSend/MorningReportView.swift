@@ -68,36 +68,27 @@ struct MorningReportCardView: View {
 // MARK: - Morning Report View
 struct MorningReportView: View {
     @Query(sort: \ChallengeAttempt.timestamp, order: .reverse) private var attempts: [ChallengeAttempt]
-    @Query(sort: \ChallengeAttempt.timestamp, order: .reverse) private var allAttempts: [ChallengeAttempt]
     @Environment(StoreManager.self) private var storeManager
-    
+    @Environment(LockdownManager.self) private var lockdownManager
+
     @State private var shareImage: UIImage? = nil
     @State private var isShowingShareSheet = false
     @State private var showPaywall = false
-    
+
     private var overnightAttempts: [ChallengeAttempt] {
         let twelveHoursAgo = Calendar.current.date(byAdding: .hour, value: -12, to: Date()) ?? Date()
         return attempts.filter { $0.timestamp > twelveHoursAgo }
     }
-    
-    private var saves: Int { overnightAttempts.filter { !$0.unlockGranted }.count }
-    
-    private var currentStreak: Int {
-        let calendar = Calendar.current
-        var streakDays = 0
-        var checkDate = calendar.startOfDay(for: Date())
-        for _ in 0..<30 {
-            let dayStart = checkDate
-            guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart),
-                  let prevDay = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
-            let dayAttempts = allAttempts.filter { $0.timestamp >= dayStart && $0.timestamp < dayEnd }
-            if dayAttempts.isEmpty { checkDate = prevDay; continue }
-            if dayAttempts.contains(where: { $0.unlockGranted }) { break }
-            streakDays += 1
-            checkDate = prevDay
-        }
-        return streakDays
-    }
+
+    /// Counts individual challenges that were not passed. `unlockGranted` is
+    /// only set on the *final* stage of a multi-stage challenge, so filtering
+    /// on it counted intermediate passes (and lockouts) as blocked messages.
+    private var saves: Int { overnightAttempts.filter { !$0.passed }.count }
+
+    /// Single source of truth for the streak — the same value the Live
+    /// Activity shows. This view used to compute its own (duplicated from
+    /// StatsView, with different semantics: an untouched night scored 0).
+    private var currentStreak: Int { lockdownManager.streakNights }
     
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())

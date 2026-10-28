@@ -138,11 +138,9 @@ struct ContactReminderView: View {
                     
                     // Call button (only after challenge)
                     if callConfirmed {
-                        if let phoneNumber = contact.phoneNumber, !phoneNumber.isEmpty {
+                        if let phoneNumber = contact.phoneNumber, !phoneNumber.isEmpty, let callURL = telURL(for: phoneNumber) {
                             Button("Call \(contact.displayName)") {
-                                if let url = URL(string: "tel://\(phoneNumber)") {
-                                    UIApplication.shared.open(url)
-                                }
+                                UIApplication.shared.open(callURL)
                             }
                             .buttonStyle(SoberPrimaryButtonStyle())
                             .padding(.horizontal)
@@ -183,15 +181,23 @@ struct ContactReminderView: View {
             ) { passed in
                 if passed {
                     callConfirmed = true
+                    // Match SetupView: passing the challenge retires the
+                    // reminder for this contact.
+                    contact.isActive = false
+                    try? modelContext.save()
                 }
                 showChallenge = false
             }
-            .environment(lockdownManager)
-            .environment(challengeManager)
-            .environment(storeManager)
-            .environment(notificationManager)
-            .environment(emergencyManager)
         }
+    }
+
+    /// Contact numbers come from the Contacts framework with formatting
+    /// characters ("+1 (555) 123-4567"). Those make a raw tel: URL invalid,
+    /// so only digits and "+" are kept and the rest percent-encoded.
+    private func telURL(for phoneNumber: String) -> URL? {
+        let allowed = CharacterSet(charactersIn: "+0123456789").inverted
+        let encoded = phoneNumber.addingPercentEncoding(withAllowedCharacters: allowed) ?? phoneNumber
+        return URL(string: "tel://\(encoded)")
     }
 }
 

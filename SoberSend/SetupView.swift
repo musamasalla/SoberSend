@@ -230,12 +230,11 @@ struct SetupView: View {
     @ViewBuilder
     private func contactRow(_ contact: LockedContact) -> some View {
         NavigationLink {
+            // No manager re-injection here: these come from the environment
+            // and are shared with the rest of the app. Creating fresh
+            // instances gave each contact its own EmergencyUnlockManager, so
+            // cooldowns and unlock state were invisible outside this row.
             ContactReminderView(contact: contact)
-                .environment(lockdownManager)
-                .environment(storeManager)
-                .environment(ChallengeManager())
-                .environment(EmergencyUnlockManager())
-                .environment(NotificationManager())
         } label: {
             HStack(spacing: 12) {
                 ZStack {

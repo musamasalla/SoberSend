@@ -4,27 +4,17 @@ import SwiftData
 struct StatsView: View {
     @Query(sort: \ChallengeAttempt.timestamp, order: .reverse) private var attempts: [ChallengeAttempt]
     @Environment(StoreManager.self) private var storeManager
-    
+    @Environment(LockdownManager.self) private var lockdownManager
+
     @State private var showPaywall = false
-    
+
     var totalBlocks: Int { attempts.filter { !$0.passed }.count }
-    
-    var currentStreak: Int {
-        let calendar = Calendar.current
-        var streakDays = 0
-        var checkDate = calendar.startOfDay(for: Date())
-        for _ in 0..<30 {
-            let dayStart = checkDate
-            guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart),
-                  let prevDay = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
-            let dayAttempts = attempts.filter { $0.timestamp >= dayStart && $0.timestamp < dayEnd }
-            if dayAttempts.isEmpty { checkDate = prevDay; continue }
-            if dayAttempts.contains(where: { $0.unlockGranted }) { break }
-            streakDays += 1
-            checkDate = prevDay
-        }
-        return streakDays
-    }
+
+    /// Single source of truth for the streak — the same value the Live
+    /// Activity shows. This view used to compute its own streak (duplicated
+    /// from MorningReportView) with different semantics: an untouched night
+    /// scored 0, so a clean week showed no streak at all.
+    var currentStreak: Int { lockdownManager.streakNights }
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
