@@ -39,19 +39,14 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
                 switch action {
                 case "app_unlock_challenge":
                     sharedDefaults?.set(true, forKey: "isRequestingAppUnlock")
-                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 case "app_unlock_emergency":
                     sharedDefaults?.set(true, forKey: "isRequestingEmergencyUnlock")
-                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 case "lockout_expired":
                     sharedDefaults?.set(true, forKey: "lockoutExpiredDeepLink")
-                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 case "lockdown_active":
                     sharedDefaults?.set(true, forKey: "lockdownActiveDeepLink")
-                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 case "morning_report":
                     sharedDefaults?.set(true, forKey: "morningReportDeepLink")
-                    sharedDefaults?.set(true, forKey: "notificationDeepLink")
                 default:
                     break
                 }
@@ -60,7 +55,6 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate,
             break
         case "VIEW_CONTACT_REMINDERS":
             sharedDefaults?.set(true, forKey: "lockdownActiveDeepLink")
-            sharedDefaults?.set(true, forKey: "notificationDeepLink")
         default:
             break
         }

@@ -18,7 +18,7 @@ struct SoberSendApp: App {
 
     init() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
-        NotificationManager.registerCategoriesOnce()
+        notificationManager.registerNotificationCategories()
         lockdownManager.notificationManager = notificationManager
     }
 
@@ -59,12 +59,8 @@ struct SoberSendApp: App {
                 .environment(storeManager)
                 .environment(challengeManager)
                 .preferredColorScheme(appearanceMode.colorScheme)
-                .onAppear {
-                    handleNotificationDeepLinks()
-                }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
-                        checkForPendingUnlockRequest()
                         startLiveActivityIfNeeded()
                     }
                 }
@@ -80,21 +76,6 @@ struct SoberSendApp: App {
         }
         .modelContainer(sharedModelContainer)
         .environment(emergencyManager)
-    }
-
-    private func checkForPendingUnlockRequest() {
-        guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
-        if shared.bool(forKey: "isRequestingAppUnlock") {
-            notificationManager.registerNotificationCategories()
-        }
-    }
-
-    private func handleNotificationDeepLinks() {
-        guard let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend") else { return }
-        shared.set(false, forKey: "notificationDeepLink")
-        shared.set(false, forKey: "lockoutExpiredDeepLink")
-        // morningReportDeepLink and lockdownActiveDeepLink stay set here;
-        // HomeView.onAppear consumes them to switch tabs after onboarding.
     }
 
     private func startLiveActivityIfNeeded() {

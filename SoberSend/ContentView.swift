@@ -78,19 +78,17 @@ struct ContentView: View {
                 .environment(emergencyManager)
         }
         .onAppear {
-            if isRequestingAppUnlock || isRequestingEmergencyUnlock {
-                notificationManager.registerNotificationCategories()
-            }
+            // Categories are registered once at launch (SoberSendApp.init) and
+            // persist, so re-registering per deep link was redundant.
+            //
+            // lockoutExpiredDeepLink is owned here: read and cleared in the
+            // same pass so SoberSendApp no longer races to clear it first.
+            // morningReportDeepLink and lockdownActiveDeepLink are owned by
+            // HomeView, which consumes them to switch tabs.
             if let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend"),
                shared.bool(forKey: "lockoutExpiredDeepLink") {
                 shared.set(false, forKey: "lockoutExpiredDeepLink")
                 showLockoutExpiredChallenge = true
-                notificationManager.registerNotificationCategories()
-            }
-            if let shared = UserDefaults(suiteName: "group.com.musamasalla.SoberSend"),
-               shared.bool(forKey: "lockdownActiveDeepLink") {
-                shared.set(false, forKey: "lockdownActiveDeepLink")
-                // lockdownActiveDeepLink is handled by HomeView
             }
         }
     }

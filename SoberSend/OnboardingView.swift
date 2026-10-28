@@ -397,7 +397,6 @@ struct OnboardingPaywallStep: View {
         hasCompletedOnboarding = true
         Task {
             await notificationManager.requestAuthorization()
-            notificationManager.registerNotificationCategories()
             notificationManager.scheduleMorningReport(at: 8, minute: 0)
         }
     }
