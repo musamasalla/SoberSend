@@ -110,6 +110,19 @@ class LockdownManager {
                 sharedDefaults.removeObject(forKey: bypassKey)
             }
         }
+
+        // Restore an emergency unlock window that survived a relaunch.
+        // EmergencyUnlockManager persists its own end time, but the shields
+        // are owned here — without this the unlock is silently forgotten and
+        // the user stays locked out after the app restarts.
+        let emergencyEndTimestamp = sharedDefaults.double(forKey: "emergencyUnlockEndTime")
+        if emergencyEndTimestamp > 0 {
+            let emergencyEnd = Date(timeIntervalSince1970: emergencyEndTimestamp)
+            if emergencyEnd > Date() {
+                self.bypassEndTime = emergencyEnd
+                scheduleBypassExpiration(at: emergencyEnd)
+            }
+        }
     }
 
     private func saveSelection() {
@@ -165,13 +178,25 @@ class LockdownManager {
              clearRestrictions()
              deviceActivityErrorMessage = nil
          }
+
+         // Reminders follow the schedule: they must exist for every active
+         // night and disappear when the schedule is cleared. Previously these
+         // methods existed but nothing ever called them.
+         if selectionToDiscourage.applicationTokens.isEmpty {
+             notificationManager?.cancelLockReminders()
+         } else {
+             notificationManager?.syncLockReminders(
+                 startHour: lockStartHour, startMinute: lockStartMinute,
+                 endHour: lockEndHour, endMinute: lockEndMinute,
+                 daysMask: activeDaysMask
+             )
+         }
      }
 
     func clearRestrictions() {
         store.clearAllSettings()
         deviceActivityCenter.stopMonitoring([activityName])
-        // Cancel lockdown-related notifications
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["lockdown_active_reminder", "lock_start_reminder", "lock_end_reminder"])
+        notificationManager?.cancelLockReminders()
     }
 
     /// Clears shield restrictions without unregistering the OS schedule, for
@@ -205,10 +230,6 @@ class LockdownManager {
             try deviceActivityCenter.startMonitoring(activityName, during: schedule)
             print("Successfully started monitoring schedule: \(startHour):\(startMinute) to \(endHour):\(endMinute)")
             deviceActivityErrorMessage = nil
-            
-            // Schedule the lockdown active reminder notification
-            notificationManager?.scheduleLockdownActiveReminder(at: startHour, minute: startMinute)
-            
             return true
         } catch let error as NSError where error.domain == "DeviceActivity" {
             let nsError = error
@@ -274,13 +295,18 @@ class LockdownManager {
     @ObservationIgnored private var bypassTask: Task<Void, Never>?
 
     /// Temporarily lifts all restrictions for a specified duration.
+    ///
+    /// Only the shields are lifted: the OS schedule stays registered so the
+    /// nightly lock still fires tonight. Calling `clearRestrictions()` here
+    /// would `stopMonitoring()` and cancel the lock reminders, silently
+    /// disabling background enforcement until the next app launch.
     func activateBypass(duration: TimeInterval) {
         bypassTask?.cancel()
-        
+
         let endTime = Date().addingTimeInterval(duration)
         bypassEndTime = endTime
-        clearRestrictions()
-        
+        clearShieldsOnly()
+
         scheduleBypassExpiration(at: endTime)
     }
     
