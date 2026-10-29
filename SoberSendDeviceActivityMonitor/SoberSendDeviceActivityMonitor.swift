@@ -55,8 +55,8 @@ class SoberSendDeviceActivityMonitor: DeviceActivityMonitor {
         store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
     }
 
-    /// Mirrors LockdownManager.isCurrentlyInLockedWindow(), including the
-    /// day-of-week mask the OS schedule itself does not enforce.
+    /// Uses the same LockWindow implementation as the app so background
+    /// enforcement and the UI can never disagree about the schedule.
     private func isCurrentlyInLockedWindow(defaults: UserDefaults) -> Bool {
         let startHour = defaults.object(forKey: "lockStartHour") == nil ? 22 : defaults.integer(forKey: "lockStartHour")
         let startMinute = defaults.integer(forKey: "lockStartMinute")
@@ -64,28 +64,10 @@ class SoberSendDeviceActivityMonitor: DeviceActivityMonitor {
         let endMinute = defaults.integer(forKey: "lockEndMinute")
         let activeDaysMask = defaults.object(forKey: "activeDaysMask") == nil ? 127 : defaults.integer(forKey: "activeDaysMask")
 
-        let now = Date()
-        let calendar = Calendar.current
-
-        func isDayActive(_ weekday: Int) -> Bool {
-            (activeDaysMask & (1 << (weekday - 1))) != 0
-        }
-
-        let todayWeekday = calendar.component(.weekday, from: now)
-        guard isDayActive(todayWeekday) else { return false }
-
-        guard let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
-              let endToday = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: now) else {
-            return false
-        }
-
-        if startToday <= endToday {
-            return now >= startToday && now <= endToday
-        } else {
-            let yesterdayWeekday = calendar.component(.weekday, from: calendar.date(byAdding: .day, value: -1, to: now) ?? now)
-            let afterMidnight = now <= endToday
-            if afterMidnight && !isDayActive(yesterdayWeekday) { return false }
-            return now >= startToday || now <= endToday
-        }
+        return LockWindow.isInWindow(
+            startHour: startHour, startMinute: startMinute,
+            endHour: endHour, endMinute: endMinute,
+            daysMask: activeDaysMask
+        )
     }
 }

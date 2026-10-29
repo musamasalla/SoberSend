@@ -253,16 +253,15 @@ class LockdownManager {
     }
 
     func isDayActive(_ calendarWeekday: Int) -> Bool {
-        let bit = 1 << (calendarWeekday - 1)
-        return (activeDaysMask & bit) != 0
+        LockWindow.isDayActive(calendarWeekday, mask: activeDaysMask)
     }
-    
+
     func toggleDay(_ calendarWeekday: Int) {
         let bit = 1 << (calendarWeekday - 1)
         activeDaysMask ^= bit
         setShieldRestrictions()
     }
-    
+
     func setAllDays(active: Bool) {
         activeDaysMask = active ? 127 : 0
         setShieldRestrictions()
@@ -361,30 +360,10 @@ class LockdownManager {
     }
 
     public func isCurrentlyInLockedWindow() -> Bool {
-        let startHour = lockStartHour
-        let startMinute = lockStartMinute
-        let endHour = lockEndHour
-        let endMinute = lockEndMinute
-
-        let now = Date()
-        let calendar = Calendar.current
-        
-        // Check if today's weekday is enabled
-        let todayWeekday = calendar.component(.weekday, from: now)
-        if !isDayActive(todayWeekday) { return false }
-        
-        guard let startToday = calendar.date(bySettingHour: startHour, minute: startMinute, second: 0, of: now),
-              let endToday = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: now) else {
-            return false
-        }
-
-        if startToday <= endToday {
-            return now >= startToday && now <= endToday
-        } else {
-            let yesterdayWeekday = calendar.component(.weekday, from: calendar.date(byAdding: .day, value: -1, to: now) ?? now)
-            let afterMidnight = now <= endToday
-            if afterMidnight && !isDayActive(yesterdayWeekday) { return false }
-            return now >= startToday || now <= endToday
-        }
+        LockWindow.isInWindow(
+            startHour: lockStartHour, startMinute: lockStartMinute,
+            endHour: lockEndHour, endMinute: lockEndMinute,
+            daysMask: activeDaysMask
+        )
     }
 }

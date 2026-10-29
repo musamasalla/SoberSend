@@ -157,6 +157,13 @@
 			path = SoberSendDeviceActivityMonitor;
 			sourceTree = "<group>";
 		};
+		E9A1F6032F600B5100ABCDEF /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -254,6 +261,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				E81F4E3A2F501269008DF02C /* SoberSend */,
+				E9A1F6032F600B5100ABCDEF /* Shared */,
 			);
 			name = SoberSend;
 			productName = SoberSend;
@@ -334,6 +342,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				E9A1F5072F600B5100ABCDEF /* SoberSendDeviceActivityMonitor */,
+				E9A1F6032F600B5100ABCDEF /* Shared */,
 			);
 			name = SoberSendDeviceActivityMonitor;
 			productName = SoberSendDeviceActivityMonitor;
