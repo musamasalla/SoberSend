@@ -514,7 +514,7 @@
 				CODE_SIGN_ENTITLEMENTS = SoberSend/SoberSend.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -555,7 +555,7 @@
 				CODE_SIGN_ENTITLEMENTS = SoberSend/SoberSend.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -716,7 +716,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldConfig/SoberSendShieldConfig.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldConfig/Info.plist;
@@ -750,7 +750,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldConfig/SoberSendShieldConfig.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldConfig/Info.plist;
@@ -784,7 +784,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldAction/SoberSendShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldAction/Info.plist;
@@ -818,7 +818,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendShieldAction/SoberSendShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendShieldAction/Info.plist;
@@ -854,7 +854,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SoberSendWidget/SoberSendWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendWidget/Info.plist;
@@ -890,7 +890,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = SoberSendWidget/SoberSendWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendWidget/Info.plist;
@@ -924,7 +924,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendDeviceActivityMonitor/SoberSendDeviceActivityMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendDeviceActivityMonitor/Info.plist;
@@ -958,7 +958,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = SoberSendDeviceActivityMonitor/SoberSendDeviceActivityMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 9Q4TV94VR7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SoberSendDeviceActivityMonitor/Info.plist;
