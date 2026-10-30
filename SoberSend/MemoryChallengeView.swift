@@ -3,94 +3,126 @@ import SwiftUI
 struct MemoryChallengeView: View {
     let difficulty: ChallengeDifficulty
     let onComplete: (Bool) -> Void
-    
-    @State private var sequence: [Color] = []
-    @State private var userSequence: [Color] = []
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// The sequence is stored as indices into `colorOptions`, not as `Color`
+    /// values. `Color` equality is not reliable across color spaces, so the
+    /// original `userSequence[i] != sequence[i]` comparison was fragile.
+    @State private var sequence: [Int] = []
+    @State private var userSequence: [Int] = []
     @State private var isShowingSequence = true
     @State private var attemptsLeft = 3
-    
-    let availableColors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange]
-    
+
+    let colorOptions: [(name: String, color: Color)] = [
+        ("Red", .red),
+        ("Blue", .blue),
+        ("Green", .green),
+        ("Yellow", .yellow),
+        ("Purple", .purple),
+        ("Orange", .orange)
+    ]
+
+    private var sequenceLength: Int {
+        switch difficulty {
+        case .easy: return 4
+        case .medium: return 5
+        case .hard: return 7
+        case .expert: return 8
+        }
+    }
+
     var body: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 24) {
             Text("Memory Challenge")
-                .font(.largeTitle)
-                .bold()
+                .font(SoberTheme.title())
+                .foregroundStyle(SoberTheme.textPrimary)
                 .padding(.top, 40)
-            
+
             Text(isShowingSequence ? "Memorize the sequence..." : "Repeat the sequence")
-                .foregroundColor(.gray)
-            
+                .font(SoberTheme.body())
+                .foregroundStyle(SoberTheme.textSecondary)
+
             Text("Attempts left: \(attemptsLeft)")
-                .foregroundColor(attemptsLeft == 1 ? .red : .gray)
-            
+                .font(SoberTheme.caption())
+                .foregroundStyle(attemptsLeft == 1 ? SoberTheme.peachText : SoberTheme.textSecondary)
+                .accessibilityLabel("\(attemptsLeft) attempts remaining")
+
             Spacer()
-            
+
             // Sequence Display
             HStack(spacing: 15) {
-                let displayCount = sequence.count
-                ForEach(0..<displayCount, id: \.self) { index in
+                ForEach(0..<sequence.count, id: \.self) { index in
+                    let shownIndex = isShowingSequence
+                        ? sequence[index]
+                        : (index < userSequence.count ? userSequence[index] : nil)
                     Circle()
-                        .fill(isShowingSequence ? sequence[index] : (index < userSequence.count ? userSequence[index] : Color.gray.opacity(0.3)))
+                        .fill(shownIndex.map { colorOptions[$0].color } ?? SoberTheme.textSecondary.opacity(0.2))
                         .frame(width: 40, height: 40)
+                        .accessibilityLabel(shownIndex.map { colorOptions[$0].name } ?? "Not entered yet")
                 }
             }
             .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            
+            .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+
             Spacer()
-            
+
             // User Input Grid
             if !isShowingSequence {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                    ForEach(availableColors, id: \.self) { color in
-                        Button(action: {
-                            addToSequence(color)
-                        }) {
+                    ForEach(0..<colorOptions.count, id: \.self) { index in
+                        Button {
+                            addToSequence(index)
+                        } label: {
                             Circle()
-                                .fill(color)
+                                .fill(colorOptions[index].color)
                                 .frame(width: 60, height: 60)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(colorOptions[index].name)
                     }
                 }
                 .padding(.horizontal, 40)
             }
-            
+
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(SoberTheme.background.ignoresSafeArea())
         .onAppear(perform: startChallenge)
     }
-    
+
     private func startChallenge() {
-        let count: Int
-        switch difficulty {
-        case .easy: count = 4
-        case .medium: count = 5
-        case .hard: count = 7
-        case .expert: count = 8
-        }
-        
-        sequence = (0..<count).compactMap { _ in availableColors.randomElement() }
+        sequence = (0..<sequenceLength).map { _ in Int.random(in: 0..<colorOptions.count) }
         userSequence = []
         isShowingSequence = true
-        
+
+        // The sequence was visual-only, which made this challenge impossible
+        // for VoiceOver users — an unblockable dead end in the middle of the
+        // unlock flow. Announce it so the colours can be memorised by ear.
+        let spoken = sequence.map { colorOptions[$0].name }.joined(separator: ", ")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            AccessibilityNotification.Announcement("Memorize the sequence: \(spoken)").post()
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            withAnimation {
+            withAnimation(reduceMotion ? nil : .default) {
                 isShowingSequence = false
             }
         }
     }
-    
-    private func addToSequence(_ color: Color) {
+
+    private func addToSequence(_ index: Int) {
         guard !isShowingSequence else { return }
-        
+
         HapticManager.shared.impact(style: .medium)
         SoundManager.shared.playTap()
-        
-        userSequence.append(color)
-        
+
+        userSequence.append(index)
+
         let currentIndex = userSequence.count - 1
-        
+
         if userSequence[currentIndex] != sequence[currentIndex] {
             // Wrong move
             HapticManager.shared.notification(type: .error)

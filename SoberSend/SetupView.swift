@@ -15,6 +15,7 @@ struct SetupView: View {
     @State private var showIntentions = false
     @State private var challengingContact: LockedContact? = nil
     @State private var wasManuallyActiveBeforePicker = false
+    @State private var showAppLimitAlert = false
     
     @AppStorage("soberNote", store: UserDefaults(suiteName: "group.com.musamasalla.SoberSend")) private var soberNote: String = ""
     
@@ -60,7 +61,11 @@ struct SetupView: View {
                         if appCount > freeAppLimit {
                             let allowed = Set(lockdownManager.selectionToDiscourage.applicationTokens.prefix(freeAppLimit))
                             lockdownManager.selectionToDiscourage.applicationTokens = allowed
-                            showPaywall = true
+                            // The truncation is silent: FamilyControls tokens
+                            // carry no app name, so the user cannot tell which
+                            // app survived — and had no way to choose. Say so
+                            // plainly and offer both escapes.
+                            showAppLimitAlert = true
                         }
                     }
                     // Re-activate if it was active before opening picker
@@ -69,6 +74,13 @@ struct SetupView: View {
                         wasManuallyActiveBeforePicker = false
                     }
                 }
+            }
+            .alert("Free Plan Limit", isPresented: $showAppLimitAlert) {
+                Button("Choose Again") { showAppPicker = true }
+                Button("Upgrade") { showPaywall = true }
+                Button("Keep This One", role: .cancel) {}
+            } message: {
+                Text("The free plan blocks 1 app, so only the first app you picked was kept. Apple doesn't tell apps which app that was — open the picker again to select the one you actually want, or upgrade for unlimited apps.")
             }
             .sheet(isPresented: $showContactPicker) {
                 ContactPickerView(onSelect: { contact in
@@ -157,6 +169,9 @@ struct SetupView: View {
                         }
                     ))
                     .labelsHidden()
+                    // The label lives in the text beside it; without this,
+                    // VoiceOver announced an unlabeled switch.
+                    .accessibilityLabel("Manual Override")
                 }
                 .padding(.top, 12)
             }

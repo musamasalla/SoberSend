@@ -192,6 +192,7 @@ struct SettingsView: View {
                         Spacer()
                         Toggle("", isOn: $morningReportEnabled)
                             .labelsHidden()
+                            .accessibilityLabel("Morning Report")
                             .onChange(of: morningReportEnabled) { _, enabled in
                                 if enabled { notificationManager.scheduleMorningReport(at: 8, minute: 0) }
                                 else { notificationManager.cancelMorningReport() }

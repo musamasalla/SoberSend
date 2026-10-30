@@ -41,15 +41,18 @@ struct MathChallengeView: View {
                     .font(SoberTheme.caption(11))
                     .foregroundStyle(attemptsLeft == 1 ? SoberTheme.peachText : SoberTheme.textSecondary)
             }
-            
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(attemptsLeft) attempts remaining")
+
             Spacer()
-            
+
             // Math problem display
             VStack(spacing: 16) {
                 Text("\(num1) \(operatorSymbol) \(num2) = ?")
                     .font(SoberTheme.mono(40))
                     .foregroundStyle(SoberTheme.lavenderText)
-                
+                    .accessibilityLabel("What is \(num1) \(operatorSymbol == "×" ? "times" : "plus") \(num2)?")
+
                 TextField("Your answer", text: $userAnswer)
                     .keyboardType(.numberPad)
                     .font(SoberTheme.mono(28))
@@ -59,7 +62,11 @@ struct MathChallengeView: View {
                     .background(SoberTheme.card, in: RoundedRectangle(cornerRadius: 16))
                     .shadow(color: showWrong ? SoberTheme.peachCard : .black.opacity(0.06), radius: 8)
                     .padding(.horizontal, 40)
-                
+                    // The number pad has no return key, so a full-screen
+                    // keyboard user previously had to reach for the button.
+                    .submitLabel(.continue)
+                    .onSubmit(checkAnswer)
+
                 if showWrong {
                     Text("Wrong answer. Try again.")
                         .font(SoberTheme.body())

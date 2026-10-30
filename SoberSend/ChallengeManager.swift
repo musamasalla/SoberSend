@@ -22,8 +22,22 @@ class ChallengeManager {
     init() {
         checkSpeechAuthorization()
     }
-    
+
     func checkSpeechAuthorization() {
+        SFSpeechRecognizer.requestAuthorization { status in
+            Task { @MainActor in
+                self.isAuthorizedForSpeech = status == .authorized
+            }
+        }
+    }
+
+    /// Prompts for speech recognition permission if it is still undecided.
+    ///
+    /// The speech challenge used to offer a "Grant Mic Access" button that was
+    /// permanently disabled: nothing ever requested authorization, and
+    /// `SFSpeechRecognizer.supportsOnDeviceRecognition` aside, a user who had
+    /// denied access had no way back into the app except Emergency Unlock.
+    func requestSpeechAuthorization() {
         SFSpeechRecognizer.requestAuthorization { status in
             Task { @MainActor in
                 self.isAuthorizedForSpeech = status == .authorized
